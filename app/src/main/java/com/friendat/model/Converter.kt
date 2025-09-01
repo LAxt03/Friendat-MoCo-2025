@@ -2,7 +2,9 @@ package com.friendat.model
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.room.TypeConverter
@@ -13,10 +15,12 @@ import com.friendat.model.database.entity.WifiLocation
 fun nameToImageVector(iconName: String): ImageVector{
     return when(iconName){
         "Home"-> Icons.Filled.Home
+        "Person"-> Icons.Default.Person
+        "Heart"-> Icons.Default.Favorite
         else -> Icons.Default.Clear
     }
 }
-
+val iconList=listOf<String>("Home","Person","Heart")
 fun longToColor(long: Long): Color{
     return Color(long.toULong())
 }
