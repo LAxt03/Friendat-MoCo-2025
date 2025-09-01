@@ -90,7 +90,7 @@ fun Add_wifi(ssid:String, onAccept:(WifiLocation)->Unit, onCancel:()->Unit) {
             fun nextIcon(){iconNum = if(iconNum==iconList.size-1){0}else{iconNum+1}}
             fun lastIcon(){iconNum = if(iconNum==0){iconList.size-1}else{iconNum-1}}
             Row {
-                IconButton(::nextIcon,modifier=Modifier.size(100.dp),) {
+                IconButton(::nextIcon,modifier=Modifier.size(100.dp)) {
                     Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Previous Icon",
                         Modifier.size(50.dp))
                 }
@@ -113,7 +113,7 @@ fun Add_wifi(ssid:String, onAccept:(WifiLocation)->Unit, onCancel:()->Unit) {
                         Modifier.size(50.dp)
                     )
                 }
-                IconButton(::lastIcon,modifier=Modifier.size(100.dp),) {
+                IconButton(::lastIcon,modifier=Modifier.size(100.dp)) {
                     Icon(imageVector = Icons.AutoMirrored.Default.ArrowForward, contentDescription = "Previous Icon",
                         Modifier.size(50.dp))
                 }
@@ -129,7 +129,7 @@ fun Add_wifi(ssid:String, onAccept:(WifiLocation)->Unit, onCancel:()->Unit) {
                     disabledContainerColor = Color.DarkGray,
                     disabledContentColor = Color.Black
                 )) {
-                    Text("Accept")
+                    Text("Save")
                 }
                 OutlinedButton(onClick = { onCancel() }, modifier = Modifier.padding(32.dp), colors = ButtonColors(
                     containerColor = BackGround,

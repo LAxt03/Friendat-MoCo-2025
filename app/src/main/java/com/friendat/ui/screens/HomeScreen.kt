@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -20,10 +22,11 @@ import com.friendat.ui.comboseables.WifiCard
 import com.friendat.ui.theme.*
 
 @Composable
-fun MainScreen(locations:List<WifiLocation>,friends: List<Friend>) {
+fun MainScreen(locations:List<WifiLocation>,friends: List<Friend>,addLocation:()->Unit,addFriend:()->Unit) {
     var selectedTab by remember { mutableStateOf(0) }
 
     val labels = listOf("Locations", "Friends")
+
 
     Column {
         // 🔹 TabBar oben
@@ -68,6 +71,19 @@ fun MainScreen(locations:List<WifiLocation>,friends: List<Friend>) {
             1 -> FriendsScreen(friends)
         }
     }
+
+    fun addButton() {
+        if (selectedTab == 0) {
+            addLocation
+        } else (addFriend)
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+    FloatingActionButton(
+        onClick = { addButton() }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp), containerColor = Primary
+    ) {
+        Icon(Icons.Default.Add, "Floating action button.")
+    }
+}
 }
 
 @Composable
@@ -108,7 +124,9 @@ fun MainScreenPrev(){
             Friend("Louis","LAxt03","Home",Color(red=255,green=150,blue = 50).value.toLong()),
             Friend("Louis","LAxt03","Home",Color(red=255,green=150,blue = 50).value.toLong()),
             Friend("Louis","LAxt03","Home",Color(red=255,green=150,blue = 50).value.toLong()),
-            )
-
+            ),
+        {},
+        {}
         )
+
 }
