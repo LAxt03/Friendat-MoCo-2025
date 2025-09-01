@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.gradlegen"
+    namespace = "com.friendat"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.gradlegen"
+        applicationId = "com.friendat"
         minSdk = 25
         targetSdk = 36
         versionCode = 1
@@ -41,6 +41,14 @@ android {
 }
 
 dependencies {
+    // Firebase BOM sorgt dafür, dass alle Firebase libs kompatibel sind
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+
+    // Firebase Auth
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Firestore
+    implementation("com.google.firebase:firebase-firestore-ktx")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
