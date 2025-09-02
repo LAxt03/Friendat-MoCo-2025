@@ -5,4 +5,4 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.room.*
 
 @Entity
-data class Friend(val name:String, @PrimaryKey val userName: String,  val iconName:String, val color: Long)
+data class Friend( @PrimaryKey val id: String, val name:String,  val iconName:String, val color: Long)

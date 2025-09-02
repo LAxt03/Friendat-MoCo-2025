@@ -1,25 +1,31 @@
 package com.friendat.firebase
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.tasks.await
 
-class FirebaseRepository {
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+class FirebaseRepository(
+    private val auth: FirebaseAuth
+) {
 
-    // Anonyme Anmeldung
-    fun loginAnonymously(onSuccess: (String) -> Unit) {
-        auth.signInAnonymously().addOnSuccessListener {
-            val uid = it.user?.uid ?: ""
-            onSuccess(uid)
+    suspend fun signInAnonymously(): FirebaseUser? {
+        return try {
+            // Prüfen ob bereits ein Nutzer existiert
+            auth.currentUser ?: run {
+                val result = auth.signInAnonymously().await()
+                result.user
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
-    // Aktuelles WLAN speichern
-    fun updateCurrentNetwork(ssid: String) {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("users").document(uid)
-            .set(mapOf("ssid" to ssid), SetOptions.merge())
+    fun getCurrentUser(): FirebaseUser? {
+        return auth.currentUser
+    }
+
+    fun signOut() {
+        auth.signOut()
     }
 }

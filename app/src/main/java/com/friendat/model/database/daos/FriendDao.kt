@@ -11,17 +11,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FriendDao {
     @Delete
-    fun deleteLocation(entry : Friend)
+    suspend fun deleteFriend(entry : Friend)
 
     @Insert
-    fun insertLocation(entry : Friend)
+    suspend fun insertFriend(entry : Friend)
 
     @Update
-    fun updateLocation(entry : Friend)
+    suspend fun updateFriend(entry : Friend)
 
-    @Query("SELECT * FROM Friend ORDER BY userName ASC")
-    fun getAllLocations(): Flow<List<Friend>>
+    @Query("SELECT * FROM Friend ORDER BY id ASC")
+    fun getAllFriends(): Flow<List<Friend>>
 
-    @Query("SELECT * FROM Friend WHERE userName = :id LIMIT 1")
-    suspend fun getLocationById(id: String): Friend?
+    @Query("SELECT * FROM Friend WHERE id = :id LIMIT 1")
+    suspend fun getFriendById(id: String): Friend?
 }
