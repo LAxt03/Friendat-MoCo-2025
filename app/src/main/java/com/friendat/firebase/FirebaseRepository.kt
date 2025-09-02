@@ -10,6 +10,7 @@ class FirebaseRepository(
 
     suspend fun signInAnonymously(): FirebaseUser? {
         return try {
+
             // Prüfen ob bereits ein Nutzer existiert
             auth.currentUser ?: run {
                 val result = auth.signInAnonymously().await()

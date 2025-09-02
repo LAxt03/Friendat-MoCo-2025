@@ -7,4 +7,4 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 @Entity
-data class WifiLocation(val ssid: String, val location_name: String, val iconName: String, val color: Long,@PrimaryKey(autoGenerate = true) val id: Int)
+data class WifiLocation(val ssid: String, val locationName: String, val iconName: String, val color: Long, @PrimaryKey(autoGenerate = true) val id: Int)

@@ -11,15 +11,15 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WifiLocationDao {
     @Delete
-    fun deleteLocation(entry : WifiLocation)
+    suspend fun deleteLocation(entry : WifiLocation)
 
     @Insert
-    fun insertLocation(entry : WifiLocation)
+    suspend fun insertLocation(entry : WifiLocation)
 
     @Update
-    fun updateLocation(entry : WifiLocation)
+    suspend fun updateLocation(entry : WifiLocation)
 
-    @Query("SELECT * FROM WifiLocation ORDER BY location_name ASC")
+    @Query("SELECT * FROM WifiLocation ORDER BY locationName ASC")
     fun getAllLocations(): Flow<List<WifiLocation>>
 
     @Query("SELECT * FROM WifiLocation WHERE id = :id LIMIT 1")

@@ -39,7 +39,7 @@ fun FriendCard(
         Spacer(Modifier.size(20.dp))
         Column(Modifier.weight(3f)) {
             Text(friend.name, fontSize = 20.sp)
-            Text(friend.userName, fontSize = 15.sp)
+            Text(friend.id, fontSize = 15.sp)
         }
 
         IconButton(
