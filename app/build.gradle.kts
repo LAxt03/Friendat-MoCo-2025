@@ -2,15 +2,18 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.gradlegen"
+    namespace = "com.friendat"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.gradlegen"
+        applicationId = "com.friendat"
         minSdk = 25
         targetSdk = 36
         versionCode = 1
@@ -41,6 +44,18 @@ android {
 }
 
 dependencies {
+    // Firebase BOM sorgt dafür, dass alle Firebase libs kompatibel sind
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+
+    // Firebase Auth
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Firestore
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    ksp("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237963236364",
+    "project_id": "friendatapp",
+    "storage_bucket": "friendatapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237963236364:android:198726c252f0a4af0f8a29",
+        "android_client_info": {
+          "package_name": "com.friendat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWK0E_bmziGVBPaCXcLl2BgWhK369ChdI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
