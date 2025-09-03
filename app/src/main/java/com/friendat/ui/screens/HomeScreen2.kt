@@ -12,11 +12,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.friendat.navigation.NavRoute
+import com.friendat.ui.viewmodel.AuthViewModel
 
 @Composable
-fun HomeScreen2(navController: NavController) {
+fun HomeScreen2(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -52,8 +57,8 @@ fun HomeScreen2(navController: NavController) {
             // die AuthRepository.signOut() Methode aufzurufen und dann zum Login-Screen zu navigieren.
             // Z.B.:
             // viewModel.signOut() -> dann im ViewModel: navController.navigate(NavRoute.Login.route) { popUpTo(NavRoute.Home2.route) { inclusive = true } }
-
-
+            authViewModel.signOut()
+            navController.navigate(NavRoute.Login.route)
         }) {
             Text("Placeholder Action (z.B. Logout)")
         }

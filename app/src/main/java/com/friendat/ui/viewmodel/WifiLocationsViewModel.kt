@@ -1,5 +1,6 @@
 package com.friendat.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,8 +45,8 @@ class WifiLocationsViewModel @Inject constructor(
     private val _newWifiLocationName = MutableStateFlow("")
     val newWifiLocationName: StateFlow<String> = _newWifiLocationName.asStateFlow()
 
-    private val _newWifiLocationSsid = MutableStateFlow("")
-    val newWifiLocationSsid: StateFlow<String> = _newWifiLocationSsid.asStateFlow()
+    private val _newWifiLocationBssid = MutableStateFlow("")
+    val newWifiLocationBssid: StateFlow<String> = _newWifiLocationBssid.asStateFlow()
 
     //Farb und Icon Zustände
     private val _availableIcons = MutableStateFlow(iconList)
@@ -87,8 +88,13 @@ class WifiLocationsViewModel @Inject constructor(
         _newWifiLocationName.value = name
     }
 
-    fun onNewWifiLocationSsidChange(ssid: String) {
-        _newWifiLocationSsid.value = ssid
+    fun onNewWifiLocationBssidChange(bssid: String) {
+        _newWifiLocationBssid.value = bssid
+    }
+
+    fun setInitialBssid(bssid: String) {
+        _newWifiLocationBssid.value = bssid
+        Log.d("WifiViewModel", "Initial SSID set to: $bssid")
     }
 
     fun onSelectedIconNameChange(iconName: String) {
@@ -112,10 +118,10 @@ class WifiLocationsViewModel @Inject constructor(
         if (_wifiLocationActionState.value == WifiLocationActionUiState.Loading) return // Verhindere doppelte Ausführung
 
         val name = newWifiLocationName.value.trim()
-        val ssid = newWifiLocationSsid.value.trim()
+        val bssid = newWifiLocationBssid.value.trim()
 
-        if (name.isBlank() || ssid.isBlank()) {
-            _wifiLocationActionState.value = WifiLocationActionUiState.Error("Name and SSID cannot be empty.")
+        if (name.isBlank() || bssid.isBlank()) {
+            _wifiLocationActionState.value = WifiLocationActionUiState.Error("Name and BSSID cannot be empty.")
             return
         }
 
@@ -132,7 +138,7 @@ class WifiLocationsViewModel @Inject constructor(
             val newLocation = WifiLocation(
                 // id wird von Firestore generiert, userId wird im Repository gesetzt
                 name = name,
-                ssid = ssid,
+                bssid = bssid,
                 iconId = selectedIconName.value,
                 colorHex = colorHex
             )
@@ -142,7 +148,7 @@ class WifiLocationsViewModel @Inject constructor(
                 _wifiLocationActionState.value = WifiLocationActionUiState.Success
                 // Felder zurücksetzen nach Erfolg
                 _newWifiLocationName.value = ""
-                _newWifiLocationSsid.value = ""
+                _newWifiLocationBssid.value = ""
                 _selectedIconName.value = iconList.firstOrNull() ?: "default_icon"
                 _selectedColorRed.value = 100f
                 _selectedColorGreen.value = 100f

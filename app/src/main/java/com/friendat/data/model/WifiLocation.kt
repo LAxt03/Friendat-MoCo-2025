@@ -9,8 +9,7 @@ data class WifiLocation(
     val id: String = "",
     val userId: String = "",
     val name: String = "",
-    val ssid: String = "",
-    // val bssid: String? = null, // bssid wäre genauer
+    val bssid: String = "",
     val iconId: String = "default_icon",
     val colorHex: String = "#CCCCCC", // Grau
 
