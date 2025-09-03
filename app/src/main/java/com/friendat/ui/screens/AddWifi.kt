@@ -143,6 +143,7 @@ fun Add_wifi(ssid:String, onAccept:(WifiLocation)->Unit, onCancel:()->Unit) {
         }
     }
 }
+
 @Preview(name = "add_wifi_prev", showSystemUi = false, showBackground = false)
 @Composable
 fun Add_wifi_test(){

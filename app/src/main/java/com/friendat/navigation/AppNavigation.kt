@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.friendat.ui.friends.FriendManagementScreen
 import com.friendat.ui.screens.AddWifiScreen
 import com.friendat.ui.screens.HomeScreen2
 import com.friendat.ui.screens.LoginScreen
@@ -23,11 +24,15 @@ fun AppNavigation(
             LoginScreen(
                 navController = navController,
                 onLoginSuccess = { // Callback vom LoginScreen bei Erfolg
-                    navController.navigate(NavRoute.WifiLocationsList.route) {
+                    navController.navigate(NavRoute.Home2.route) {
                         popUpTo(NavRoute.Login.route) { inclusive = true }
                     }
                 }
             )
+        }
+
+        composable(route = NavRoute.FriendManagement.route) {
+            FriendManagementScreen(navController = navController)
         }
 
         composable(route = NavRoute.WifiLocationsList.route) {

@@ -2,6 +2,8 @@ package com.friendat.di
 
 import com.friendat.data.repository.AuthRepository
 import com.friendat.data.repository.AuthRepositoryImpl
+import com.friendat.data.repository.FriendRepository
+import com.friendat.data.repository.FriendRepositoryImpl
 import com.friendat.data.repository.WifiLocationRepository
 import com.friendat.data.repository.WifiLocationRepositoryImpl
 import dagger.Binds
@@ -26,6 +28,12 @@ abstract class RepositoryModule {
     abstract fun bindWifiLocationRepository(
         wifiLocationRepositoryImpl: WifiLocationRepositoryImpl
     ): WifiLocationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFriendRepository(
+        friendRepositoryImpl: FriendRepositoryImpl
+    ): FriendRepository
 }
 
 
