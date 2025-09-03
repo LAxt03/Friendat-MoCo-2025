@@ -11,23 +11,24 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.friendat.model.database.entity.Friend
 import com.friendat.model.database.entity.WifiLocation
-import com.friendat.ui.comboseables.FriendCard
-import com.friendat.ui.comboseables.WifiCard
+import com.friendat.ui.composables.FriendCard
+import com.friendat.ui.composables.WifiCard
 import com.friendat.ui.theme.*
 
+
 @Composable
-fun MainScreen(locations:List<WifiLocation>,friends: List<Friend>,addLocation:()->Unit,addFriend:()->Unit) {
-    var selectedTab by remember { mutableStateOf(0) }
+fun HomeScreen(navController: NavController) {
 
+
+
+
+    var selectedTab by remember { mutableIntStateOf(0) }
     val labels = listOf("Locations", "Friends")
-
-
     Column {
         // 🔹 TabBar oben
         TabRow(
@@ -65,25 +66,27 @@ fun MainScreen(locations:List<WifiLocation>,friends: List<Friend>,addLocation:()
             }
         }
 
-        // 🔹 Content je nach Tab
-        when (selectedTab) {
-            0 -> LocationsScreen(locations)
-            1 -> FriendsScreen(friends)
-        }
+//        // 🔹 Content je nach Tab
+//        when (selectedTab) {
+//            0 -> LocationsScreen(a)
+//            1 -> FriendsScreen(b)
+//        }
     }
 
-    fun addButton() {
-        if (selectedTab == 0) {
-            addLocation
-        } else (addFriend)
+
+
+    Box(Modifier.fillMaxSize()) {
+        FloatingActionButton(
+            onClick = {
+                if (selectedTab == 0) navController.navigate("addWifi")
+                else navController.navigate("addFriend")
+            },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            containerColor = Primary
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add")
+        }
     }
-    Box(modifier = Modifier.fillMaxSize()) {
-    FloatingActionButton(
-        onClick = { addButton() }, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp), containerColor = Primary
-    ) {
-        Icon(Icons.Default.Add, "Floating action button.")
-    }
-}
 }
 
 @Composable
@@ -108,6 +111,7 @@ fun FriendsScreen(friends:List<Friend>) {
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPrev(){
@@ -130,3 +134,4 @@ fun MainScreenPrev(){
         )
 
 }
+*/

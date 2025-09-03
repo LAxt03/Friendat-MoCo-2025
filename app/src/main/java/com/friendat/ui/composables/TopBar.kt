@@ -1,4 +1,4 @@
-package com.friendat.ui.comboseables
+package com.friendat.ui.composables
 
 
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset

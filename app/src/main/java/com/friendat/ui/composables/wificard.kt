@@ -1,4 +1,4 @@
-package com.friendat.ui.comboseables
+package com.friendat.ui.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +35,7 @@ fun WifiCard(
         Avatar(wifiLocation.getIcon(), wifiLocation.getColor(), editClick)
         Spacer(Modifier.size(20.dp))
         Column(Modifier.weight(3f)) {
-            Text(wifiLocation.location_name, fontSize = 20.sp)
+            Text(wifiLocation.locationName, fontSize = 20.sp)
             Text(wifiLocation.ssid, fontSize = 15.sp)
         }
 
