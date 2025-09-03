@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.friendat.firebase.FirestoreRepository
 import com.friendat.model.database.entity.Friend
 import com.friendat.model.repository.FriendRepository
+import com.friendat.ui.theme.Primary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,7 +40,7 @@ class FriendViewModel(
         viewModelScope.launch {
             firestoreRepo.addFriendOnline(id)
             localRepo.addFriend(
-                Friend(id = id, name = name, iconName = "default", color = 0xFF000000)
+                Friend(id = id, name = name, iconName = "default", color = Primary.value.toLong())
             )
         }
     }

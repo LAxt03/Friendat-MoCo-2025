@@ -16,7 +16,7 @@ import com.friendat.firebase.FirebaseRepository
 import com.friendat.ui.theme.FriendatTheme
 
 class MainActivity : ComponentActivity() {
-    private val firebaseRepository = FirebaseRepository()
+//    private val firebaseRepository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,11 +32,11 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        firebaseRepository.loginAnonymously { uid ->
-            Log.d("FirebaseTest", "Angemeldeter User: $uid")
-
-            firebaseRepository.updateCurrentNetwork("Test_WLAN")
-        }
+//        firebaseRepository.loginAnonymously { uid ->
+//            Log.d("FirebaseTest", "Angemeldeter User: $uid")
+//
+//            firebaseRepository.updateCurrentNetwork("Test_WLAN")
+//        }
     }
 }
 

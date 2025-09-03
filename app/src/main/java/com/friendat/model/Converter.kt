@@ -1,33 +1,38 @@
 package com.friendat.model
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.room.TypeConverter
+import com.friendat.R
 import com.friendat.model.database.entity.Friend
 import com.friendat.model.database.entity.WifiLocation
 
 
-fun nameToImageVector(iconName: String): ImageVector{
+fun nameToResId(iconName: String):Int{
     return when(iconName){
-        "Home"-> Icons.Filled.Home
-        "Person"-> Icons.Default.Person
-        "Heart"-> Icons.Default.Favorite
-        else -> Icons.Default.Clear
+        "Home"-> R.drawable.ic_home
+        "Person"->R.drawable.ic_person
+        "Heart"->R.drawable.ic_heart
+        "Car"->R.drawable.ic_car
+        "Mountain"->R.drawable.ic_mountain
+        "People"->R.drawable.ic_people
+        "Apartment"->R.drawable.ic_apartment
+        "Flood"->R.drawable.ic_flood
+        else ->R.drawable.ic_error
     }
 }
-val iconList=listOf<String>("Home","Person","Heart")
+val iconList=listOf<String>("Home","Person","Heart","Car","Mountain","People","Apartment","Flood")
 fun longToColor(long: Long): Color{
     return Color(long.toULong())
 }
-fun WifiLocation.getIcon(): ImageVector = nameToImageVector(iconName)
+@Composable
+fun WifiLocation.getIcon()= painterResource(nameToResId(iconName))
 
 fun WifiLocation.getColor(): Color = longToColor(color)
-fun Friend.getIcon(): ImageVector = nameToImageVector(iconName)
+@Composable
+fun Friend.getIcon()=painterResource(nameToResId(iconName))
 
 fun Friend.getColor() = longToColor(color)
 
