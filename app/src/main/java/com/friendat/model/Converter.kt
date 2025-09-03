@@ -20,10 +20,11 @@ fun nameToResId(iconName: String):Int{
         "People"->R.drawable.ic_people
         "Apartment"->R.drawable.ic_apartment
         "Flood"->R.drawable.ic_flood
+        "Ramen"->R.drawable.ic_ramen
         else ->R.drawable.ic_error
     }
 }
-val iconList=listOf<String>("Home","Person","Heart","Car","Mountain","People","Apartment","Flood")
+val iconList=listOf<String>("Home","Person","Heart","Car","Mountain","People","Apartment","Flood","Ramen")
 fun longToColor(long: Long): Color{
     return Color(long.toULong())
 }

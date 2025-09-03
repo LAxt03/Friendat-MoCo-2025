@@ -28,6 +28,7 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.Text
@@ -105,7 +106,7 @@ fun Empty(){
 fun ShowFriends(friendList: List<Friend>){
     var side by remember { mutableIntStateOf(0) }
     fun changeSide(){side = if(side==0){1}else{0}}
-    LazyColumn(GlanceModifier.fillMaxSize()) {
+    LazyColumn(GlanceModifier.fillMaxSize().background(Color.DarkGray)) {
         items(friendList) { friend ->
             FriendView(friend = friend,side,::changeSide)
         }
@@ -113,7 +114,7 @@ fun ShowFriends(friendList: List<Friend>){
 }
 @Composable
 fun FriendView(friend: Friend,side:Int,onClick:()-> Unit){
-    Box(GlanceModifier.size(73.dp,86.dp).background(friend.getColor()).clickable(onClick), contentAlignment = Alignment.Center){
+    Box(GlanceModifier.height(89.dp).fillMaxWidth().background(friend.getColor()).clickable(onClick), contentAlignment = Alignment.Center){
         when(side){
             0->{
                 Image(ImageProvider(nameToResId(iconName = friend.iconName)),friend.locationName ,GlanceModifier.padding(6.dp).fillMaxSize())
