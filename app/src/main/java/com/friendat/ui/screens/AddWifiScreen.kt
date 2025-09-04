@@ -1,5 +1,6 @@
 package com.friendat.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -29,12 +30,15 @@ import kotlin.math.roundToInt
 @Composable
 fun AddWifiScreen(
     navController: NavController,
+    bssid: String,
     viewModel: WifiLocationsViewModel = hiltViewModel()
 
 ) {
+
+    Log.d("AddWifiScreen", "Composable called. Received BSSID parameter: '$bssid'")
     // States aus dem ViewModel
     val locationName by viewModel.newWifiLocationName.collectAsState()
-    val locationSsid by viewModel.newWifiLocationSsid.collectAsState() // Für manuelle SSID-Eingabe
+    val locationBssid by viewModel.newWifiLocationBssid.collectAsState() // Für manuelle BSSID-Eingabe
     val actionState by viewModel.wifiLocationActionState.collectAsState()
 
     val availableIcons by viewModel.availableIcons.collectAsState()
@@ -46,6 +50,13 @@ fun AddWifiScreen(
     val colorRed by viewModel.selectedColorRed.collectAsState()
     val colorGreen by viewModel.selectedColorGreen.collectAsState()
     val colorBlue by viewModel.selectedColorBlue.collectAsState()
+
+    LaunchedEffect(key1 = bssid, key2 = viewModel) {
+        if (bssid.isNotBlank()) {
+            viewModel.setInitialBssid(bssid)
+        }
+    }
+
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -104,16 +115,16 @@ fun AddWifiScreen(
                     onValueChange = { viewModel.onNewWifiLocationNameChange(it) },
                     label = { Text("Enter location name (e.g., Home)") },
                     singleLine = true,
-                    // colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = Color.White, focusedContainerColor = Color.White) // Standardfarben nutzen oder anpassen
                 )
+
 
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    value = locationSsid,
-                    onValueChange = { viewModel.onNewWifiLocationSsidChange(it) },
-                    label = { Text("Enter Wi-Fi SSID (Network Name)") },
+                    value = locationBssid,
+                    onValueChange = { viewModel.onNewWifiLocationBssidChange(it) },
+                    label = { Text("Enter Wi-Fi BSSID (Network Name)") },
                     singleLine = true,
                 )
 
@@ -210,12 +221,13 @@ fun AddWifiScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button( // Save Button
+                Button(
+                    // Save Button
                     onClick = { viewModel.addWifiLocation() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    enabled = locationName.isNotBlank() && locationSsid.isNotBlank() && actionState !is WifiLocationActionUiState.Loading,
+                    enabled = locationName.isNotBlank() && locationBssid.isNotBlank() && actionState !is WifiLocationActionUiState.Loading,
                     // colors = ButtonDefaults.buttonColors(containerColor = Sekundary) // Dein Sekundary
                 ) {
                     if (actionState is WifiLocationActionUiState.Loading) {
@@ -250,7 +262,9 @@ fun ColorSlider(
     thumbColor: Color,
     activeTrackColor: Color
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 20.dp, vertical = 4.dp)) {
         Text("$label: ${value.roundToInt()}", fontSize = 16.sp)
         Slider(
             value = value,
