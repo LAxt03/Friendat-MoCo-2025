@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.friendat.data.model.WifiLocation
 import com.friendat.data.repository.WifiLocationRepository
+import com.friendat.data.sources.local.dao.WifiLocationDao
 import com.friendat.model.iconList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -30,7 +31,8 @@ sealed interface WifiLocationActionUiState {
 
 @HiltViewModel
 class WifiLocationsViewModel @Inject constructor(
-    private val wifiLocationRepository: WifiLocationRepository
+    private val wifiLocationRepository: WifiLocationRepository,
+    private val wifiLocationDao: WifiLocationDao
 ) : ViewModel() {
 
     //Zustände
@@ -66,7 +68,7 @@ class WifiLocationsViewModel @Inject constructor(
 
 
     init {
-        loadWifiLocations()
+        loadWifiLocationsFromRoom()
     }
 
 
@@ -83,7 +85,46 @@ class WifiLocationsViewModel @Inject constructor(
         }
     }
 
-    //Event Handling
+    private fun loadWifiLocationsFromRoom() {
+        _wifiLocationsState.value = WifiLocationListUiState.Loading // Setze Ladezustand initial
+        viewModelScope.launch {
+            // Hole die userId sicher, z.B. aus dem AuthRepository oder Firebase Auth direkt
+            // Für dieses Beispiel gehen wir davon aus, dass das Repository das handhaben kann
+            // oder du eine Methode hast, um die aktuelle userId zu bekommen.
+            // Hier wäre es besser, wenn das Repository den userId-Check macht.
+            // Für den DAO-Aufruf brauchen wir aber die userId.
+            // Eine Möglichkeit:
+            // val userId = firebaseAuth.currentUser?.uid // (FirebaseAuth müsste injiziert werden)
+            // if (userId == null) {
+            //     _wifiLocationsState.value = WifiLocationListUiState.Error("User nicht angemeldet")
+            //     return@launch
+            // }
+
+            // wifiLocationDao.getAllLocationsForUserFlow(userId) // <- Braucht die userId
+            // Besser: Das Repository bietet einen Flow aus Room an, der die userId intern behandelt
+
+            // DAHER: Wir erweitern das Repository, um einen Flow aus Room anzubieten
+
+            wifiLocationRepository.getWifiLocationsForCurrentUserFromRoom() // NEUE METHODE IM REPOSITORY
+                .collect { locations -> // Diese Methode gibt direkt List<WifiLocation> oder Result<List<WifiLocation>> zurück
+                    // Je nachdem, wie die neue Repository-Methode implementiert ist:
+                    // Variante A: Repository-Methode gibt Flow<List<WifiLocation>> zurück
+                    _wifiLocationsState.value = WifiLocationListUiState.Success(locations)
+
+                    // Variante B: Repository-Methode gibt Flow<Result<List<WifiLocation>>> zurück (ähnlich wie Firestore-Version)
+                    // _wifiLocationsState.value = when {
+                    //    result.isSuccess -> WifiLocationListUiState.Success(result.getOrNull() ?: emptyList())
+                    //    result.isFailure -> WifiLocationListUiState.Error(result.exceptionOrNull()?.message)
+                    //    else -> WifiLocationListUiState.Error("Unknown error")
+                    // }
+                }
+        }
+    }
+
+
+
+
+        //Event Handling
     fun onNewWifiLocationNameChange(name: String) {
         _newWifiLocationName.value = name
     }
