@@ -12,12 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.friendat.model.database.entity.WifiLocation
 import com.friendat.model.iconList
-import com.friendat.model.nameToImageVector
+import com.friendat.model.nameToResId
 import com.friendat.ui.theme.*
 import kotlin.math.roundToInt
 
@@ -108,7 +109,7 @@ fun Add_wifi(ssid:String, onAccept:(WifiLocation)->Unit, onCancel:()->Unit) {
                     Alignment.Center
                 ) {
                     Icon(
-                        imageVector = nameToImageVector(iconList.get(iconNum)),
+                        painterResource(nameToResId(iconList.get(iconNum))),
                         contentDescription = iconList.get(iconNum),
                         Modifier.size(50.dp)
                     )

@@ -12,6 +12,10 @@ android {
     namespace = "com.friendat"
     compileSdk = 36
 
+    buildFeatures {
+        compose = true
+    }
+
     defaultConfig {
         applicationId = "com.friendat"
         minSdk = 25
@@ -40,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -80,4 +85,9 @@ dependencies {
     implementation("androidx.room:room-ktx:${room_version}")
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+
+    //Widget
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
+    implementation("androidx.glance:glance-material:1.1.1")
 }
