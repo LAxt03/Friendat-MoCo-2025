@@ -14,17 +14,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.friendat.model.database.entity.WifiLocation
+import androidx.glance.ImageProvider
+import com.friendat.data.model.WifiLocation
 import com.friendat.model.getColor
 import com.friendat.model.getIcon
+import com.friendat.model.nameToResId
 import com.friendat.ui.theme.Sekundary
 
 @Composable
 fun WifiCard(
-    wifiLocation: WifiLocation,editClick: ()-> Unit, deleteClick: () -> Unit,modifier: Modifier = Modifier
+    wifiLocation: WifiLocation, editClick: ()-> Unit, deleteClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     Row(
@@ -33,11 +36,14 @@ fun WifiCard(
             .padding(3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Avatar(wifiLocation.getIcon(), wifiLocation.getColor(), editClick)
+        Avatar(painterResource(nameToResId(wifiLocation.iconId)),
+            try { Color(android.graphics.Color.parseColor(wifiLocation.colorHex)) }
+            catch (e: IllegalArgumentException) {Color.Gray},
+            {})
         Spacer(Modifier.size(20.dp))
         Column(Modifier.weight(3f)) {
-            Text(wifiLocation.locationName, fontSize = 20.sp)
-            Text(wifiLocation.ssid, fontSize = 15.sp)
+            Text(wifiLocation.name, fontSize = 20.sp)
+            Text(wifiLocation.bssid, fontSize = 15.sp)
         }
 
         IconButton(
@@ -82,7 +88,7 @@ fun Avatar(icon: Painter,color:Color, onClick:()-> Unit, modifier: Modifier = Mo
         }
     }
 }
-
+/*
 @Composable
 @Preview(showBackground = true)
 fun ContactCardPreview() {
@@ -92,3 +98,4 @@ fun ContactCardPreview() {
         modifier = Modifier
     )
 }
+*/

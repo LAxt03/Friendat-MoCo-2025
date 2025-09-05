@@ -17,6 +17,9 @@ import com.friendat.model.database.entity.Friend
 import com.friendat.model.getColor
 import com.friendat.model.getIcon
 import com.friendat.ui.theme.Sekundary
+import com.friendat.ui.viewmodel.FriendScreenUiEvent
+import com.friendat.ui.viewmodel.FriendsListUiState
+import com.friendat.ui.viewmodel.FriendshipWithDisplayInfo
 
 @Composable
 fun FriendCard(
@@ -64,6 +67,7 @@ fun FriendCard(
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable()

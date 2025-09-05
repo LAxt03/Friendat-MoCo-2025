@@ -16,11 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.friendat.model.nameToImageVector
+import com.friendat.model.nameToResId
 import com.friendat.ui.theme.*
 import com.friendat.ui.viewmodel.WifiLocationActionUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel
@@ -89,7 +90,8 @@ fun AddWifiScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarColors(BackGround,BackGround,Color.Black,Color.Black,Color.Black)
             )
         }
     ) { paddingValues ->
@@ -194,7 +196,7 @@ fun AddWifiScreen(
                     ) {
                         if (availableIcons.isNotEmpty() && currentIconIndex < availableIcons.size) {
                             Icon(
-                                imageVector = nameToImageVector(availableIcons[currentIconIndex]),
+                                painter = painterResource(nameToResId(availableIcons[currentIconIndex])),
                                 contentDescription = availableIcons[currentIconIndex],
                                 Modifier.size(40.dp),
                                 tint = LocalContentColor.current
@@ -228,7 +230,7 @@ fun AddWifiScreen(
                         .fillMaxWidth()
                         .height(50.dp),
                     enabled = locationName.isNotBlank() && locationBssid.isNotBlank() && actionState !is WifiLocationActionUiState.Loading,
-                    // colors = ButtonDefaults.buttonColors(containerColor = Sekundary) // Dein Sekundary
+                    colors = ButtonColors(Sekundary,Color.White, Color.White,Color.Gray)
                 ) {
                     if (actionState is WifiLocationActionUiState.Loading) {
                         CircularProgressIndicator(modifier = Modifier.size(ButtonDefaults.IconSize), color = Color.White)
@@ -243,7 +245,8 @@ fun AddWifiScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(top = 8.dp),
-                    enabled = actionState !is WifiLocationActionUiState.Loading
+                    enabled = actionState !is WifiLocationActionUiState.Loading,
+                    colors= ButtonColors(Sekundary,Color.White, Color.White,Color.Gray)
                 ) {
                     Text("Cancel", fontSize = 16.sp)
                 }

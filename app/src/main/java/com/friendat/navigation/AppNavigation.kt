@@ -9,7 +9,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.friendat.ui.friends.FriendManagementScreen
+import com.friendat.ui.screens.AddFriend2
 import com.friendat.ui.screens.AddWifiScreen
+import com.friendat.ui.screens.HomeScreen
 import com.friendat.ui.screens.HomeScreen2
 import com.friendat.ui.screens.LoginScreen
 import com.friendat.ui.screens.WifiLocationsListScreen
@@ -65,6 +67,14 @@ fun AppNavigation(
                 bssid = actualBssid
 
             )
+        }
+
+        composable(route = NavRoute.Home.route) {
+            HomeScreen(navController = navController)
+        }
+
+        composable(route = NavRoute.AddFriend.route){
+            AddFriend2(navController)
         }
 
     }

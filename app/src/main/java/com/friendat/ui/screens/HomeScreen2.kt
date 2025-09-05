@@ -49,7 +49,7 @@ fun HomeScreen2(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
+        Button(onClick = {navController.navigate(NavRoute.Home.route)
             // Beispiel: Navigiere zurück (würde hier die App beenden, wenn Home der Start ist nach Login)
             // oder zu einem anderen Screen, falls es einen gäbe
             // navController.popBackStack() // Einfach als Beispiel für einen Button
@@ -57,10 +57,9 @@ fun HomeScreen2(
             // die AuthRepository.signOut() Methode aufzurufen und dann zum Login-Screen zu navigieren.
             // Z.B.:
             // viewModel.signOut() -> dann im ViewModel: navController.navigate(NavRoute.Login.route) { popUpTo(NavRoute.Home2.route) { inclusive = true } }
-            authViewModel.signOut()
-            navController.navigate(NavRoute.Login.route)
+            navController.navigate(NavRoute.Home.route)
         }) {
-            Text("Placeholder Action (z.B. Logout)")
+            Text("NEW UI")
         }
     }
 }

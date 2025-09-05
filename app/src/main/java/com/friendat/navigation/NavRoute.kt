@@ -16,4 +16,6 @@ sealed class NavRoute(val route: String) {
     object FriendManagement: NavRoute("friend_management_screen")
 
 
+    object Home : NavRoute("home")
+
 }
