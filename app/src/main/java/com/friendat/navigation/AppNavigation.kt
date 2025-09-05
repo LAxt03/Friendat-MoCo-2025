@@ -31,7 +31,7 @@ fun AppNavigation(
         composable(route = NavRoute.Login.route) {
             LoginScreen(
                 navController = navController,
-                onLoginSuccess = {
+                onLoginSuccess = { // Callback vom LoginScreen bei Erfolg
                     navController.navigate(NavRoute.Home.route) {
                         popUpTo(NavRoute.Login.route) { inclusive = true }
                     }

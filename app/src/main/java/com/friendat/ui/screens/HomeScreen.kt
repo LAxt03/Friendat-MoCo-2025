@@ -27,13 +27,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.friendat.data.model.Friend
+import com.friendat.data.model.FriendshipStatus
+import com.friendat.model.database.entity.Friend
 import com.friendat.navigation.NavRoute
 import com.friendat.ui.composables.FriendCard
 import com.friendat.ui.composables.WifiCard
@@ -41,11 +44,14 @@ import com.friendat.ui.friends.AcceptedFriendsSection
 import com.friendat.ui.friends.FriendshipCard
 import com.friendat.ui.friends.PendingRequestsSection
 import com.friendat.ui.friends.UserSearchSection
+import com.friendat.ui.livestatus.FriendLiveStatusCard
+import com.friendat.ui.livestatus.FriendLiveStatusViewModel
 import com.friendat.ui.theme.*
 import com.friendat.ui.viewmodel.AuthViewModel
 import com.friendat.ui.viewmodel.FriendScreenUiEvent
 import com.friendat.ui.viewmodel.FriendViewModel
 import com.friendat.ui.viewmodel.FriendsListUiState
+import com.friendat.ui.viewmodel.FriendshipWithDisplayInfo
 import com.friendat.ui.viewmodel.WifiLocationListUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel
 import com.friendat.utils.WifiUtils
@@ -181,6 +187,13 @@ fun HomeScreen(navController: NavController,
                         navController.navigate(NavRoute.Login.route)
                     }
                 )
+                DropdownMenuItem(
+                    text = { Text("DevMode") },
+                    onClick = {
+                        authViewModel.signOut()
+                        navController.navigate(NavRoute.Home2.route)
+                    }
+                )
             }
         }
         // TabBar oben
@@ -231,7 +244,7 @@ fun HomeScreen(navController: NavController,
         FloatingActionButton(
             onClick = {when(selectedTab){
                 0-> navController.navigate(NavRoute.AddFriend.route)
-                1-> performPermissionRequestAndNavigate()
+                //1-> performPermissionRequestAndNavigate()
                 }
             },
             modifier = Modifier
@@ -247,12 +260,105 @@ fun HomeScreen(navController: NavController,
 
 
 @Composable
-fun FriendsScreen() {
-    Box(Modifier.fillMaxSize()) {
-        Text("Under Construction", modifier = Modifier.padding(20.dp))
+fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(),friendVM: FriendViewModel=hiltViewModel()) {
+    Column(Modifier.fillMaxWidth()) {
+            val uiState by viewModel.uiState.collectAsState()
+            val paddingValues by remember {mutableStateOf(3.dp) }
+            when {
+
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                uiState.errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Error: ${uiState.errorMessage}")
+                    }
+                }
+                uiState.friendsWithStatus.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No friends to display status for.")
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.friendsWithStatus, key = { it.displayInfo.uid }) { friendWithStatus ->
+                            FriendCard(Friend(friendWithStatus.displayInfo.displayName?:"error",
+                                friendWithStatus.displayInfo.email?:"error",
+                                friendWithStatus.liveStatus?.iconId?:"error",
+                                friendWithStatus.liveStatus?.colorHex?.toLong()?:Color(100,100,100).value.toLong(),
+                                friendWithStatus.liveStatus?.locationName?:"error"),{},
+                                {friendVM.onEvent(FriendScreenUiEvent.RemoveFriend(friendWithStatus.displayInfo.uid)) }
+                            )
+                            Divider()
+                        }
+                    }
+                }
+            }
+            val friendsListState by friendVM.friendsListUiState.collectAsState()
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Pending Friend Requests", style = MaterialTheme.typography.titleMedium)
+                if (friendsListState.isLoadingPending) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                }
+                if (friendsListState.pendingRequests.isEmpty() && !friendsListState.isLoadingPending) {
+                    Text("No pending requests.")
+                }
+                friendsListState.pendingRequests.forEach { friendshipWithInfo ->
+                    PendingFriendshipCard(
+                        friendshipWithInfo = friendshipWithInfo,
+                        actions = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = { friendVM.onEvent(FriendScreenUiEvent.AcceptFriendRequest(friendshipWithInfo.friendship.id)) },
+                                    colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray)) {
+                                    Text("Accept")
+                                }
+                                Button(onClick = { friendVM.onEvent(FriendScreenUiEvent.DeclineFriendRequest(friendshipWithInfo.friendship.id)) },
+                                    colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray)) {
+                                    Text("Decline")
+                                }
+                            }
+                        }
+                    )
+                }
+            }
     }
 }
+@Composable
+fun PendingFriendshipCard(
+    friendshipWithInfo: FriendshipWithDisplayInfo,
+    actions: @Composable () -> Unit
+) {
+    val friendInfo = friendshipWithInfo.friendDisplayInfo
+    val friendship = friendshipWithInfo.friendship
 
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardColors(BackGround,Color.Black,BackGround,Color.Black)) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            if (friendInfo != null) {
+                Text(friendInfo.displayName ?: "Loading Name...", fontWeight = FontWeight.Bold)
+                Text(friendInfo.email ?: "Loading Email...", fontSize = 14.sp)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            actions()
+        }
+    }
+}
 
 @Composable
 fun LocationsScreen(locationsState: WifiLocationListUiState,viewModel: WifiLocationsViewModel = hiltViewModel()) {

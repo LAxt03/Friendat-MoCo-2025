@@ -3,8 +3,10 @@ package com.friendat.widget
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
@@ -36,6 +38,7 @@ import com.friendat.data.model.Friend
 import com.friendat.data.sources.local.converters.getColor
 import com.friendat.data.sources.local.converters.nameToResId
 import com.friendat.ui.theme.Primary
+import com.friendat.ui.viewmodel.FriendViewModel
 
 class MyAppWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = friendatWidget()
@@ -61,6 +64,7 @@ class friendatWidget : GlanceAppWidget() {
         context: Context,
         id: GlanceId
     ) {
+
         provideContent {
             // create your AppWidget here
 
