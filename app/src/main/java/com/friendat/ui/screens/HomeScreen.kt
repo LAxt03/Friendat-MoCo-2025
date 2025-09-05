@@ -260,7 +260,7 @@ fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friend
 
             uiState.isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    modifier = Modifier.padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -268,7 +268,7 @@ fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friend
             }
             uiState.errorMessage != null -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    modifier = Modifier.padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Error: ${uiState.errorMessage}")
@@ -276,7 +276,7 @@ fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friend
             }
             uiState.friendsWithStatus.isEmpty() -> {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    modifier = Modifier.padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("No friends to display status for.")
