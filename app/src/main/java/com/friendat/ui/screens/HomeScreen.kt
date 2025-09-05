@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +44,8 @@ import com.friendat.ui.viewmodel.FriendshipWithDisplayInfo
 import com.friendat.ui.viewmodel.WifiLocationListUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel
 import com.friendat.utils.WifiUtils
+import androidx.compose.foundation.layout.Arrangement
+
 
 
 @Composable
@@ -232,7 +235,7 @@ fun HomeScreen(navController: NavController,
         FloatingActionButton(
             onClick = {when(selectedTab){
                 0-> navController.navigate(NavRoute.AddFriend.route)
-                //1-> performPermissionRequestAndNavigate()
+                1-> performPermissionRequestAndNavigate()
                 }
             },
             modifier = Modifier
@@ -247,94 +250,112 @@ fun HomeScreen(navController: NavController,
 }
 
 
-@Composable
-fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friendVM: FriendViewModel=hiltViewModel()) {
-    Column(Modifier.fillMaxWidth()) {
-            val uiState by viewModel.uiState.collectAsState()
-            val paddingValues by remember {mutableStateOf(3.dp) }
-            when {
 
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+@Composable
+fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friendVM: FriendViewModel = hiltViewModel()) {
+    Column(Modifier.fillMaxWidth()) {
+        val uiState by viewModel.uiState.collectAsState()
+        val paddingValues by remember { mutableStateOf(3.dp) }
+        when {
+
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-                uiState.errorMessage != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Error: ${uiState.errorMessage}")
-                    }
+            }
+            uiState.errorMessage != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Error: ${uiState.errorMessage}")
                 }
-                uiState.friendsWithStatus.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No friends to display status for.")
-                    }
+            }
+            uiState.friendsWithStatus.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No friends to display status for.")
                 }
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(paddingValues)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(uiState.friendsWithStatus, key = { it.displayInfo.uid }) { friendWithStatus ->
-                            FriendCard(
-                                Friend(
-                                    friendWithStatus.displayInfo.displayName ?: "error",
-                                    friendWithStatus.displayInfo.email ?: "error",
-                                    friendWithStatus.liveStatus?.iconId ?: "error",
-                                    friendWithStatus.liveStatus?.colorHex?.toLong() ?: Color(
-                                        100,
-                                        100,
-                                        100
-                                    ).value.toLong(),
-                                    friendWithStatus.liveStatus?.locationName ?: "error"
-                                ),{},
-                                {friendVM.onEvent(FriendScreenUiEvent.RemoveFriend(friendWithStatus.displayInfo.uid)) }
-                            )
-                            Divider()
-                        }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp) // Du hattest hier Arrangement importiert, stelle sicher, dass es da ist
+                ) {
+                    items(uiState.friendsWithStatus, key = { it.displayInfo.uid }) { friendWithStatus ->
+                        // KORRIGIERTE FARBKONVERTIERUNG
+                        val colorLong = friendWithStatus.liveStatus?.colorHex?.let { hexString ->
+                            try {
+                                val cleanHexString = if (hexString.startsWith("#")) hexString else "#$hexString"
+                                val androidColorInt = android.graphics.Color.parseColor(cleanHexString)
+                                androidx.compose.ui.graphics.Color(androidColorInt).value.toLong()
+                            } catch (e: IllegalArgumentException) {
+                                Log.e("FriendsScreen", "Ungültiger Hex-Farbstring: $hexString für Freund ${friendWithStatus.displayInfo.displayName}", e)
+                                0L // Fallback-Farbe (Standardwert aus Friend-Klasse)
+                            }
+                        } ?: 0L // Fallback, falls colorHex null ist (Standardwert aus Friend-Klasse)
+
+                        FriendCard(
+                            // ANGEPASST AN DEINE Friend-DATENKLASSE
+                            Friend(
+                                name = friendWithStatus.liveStatus?.locationName ?: "error", // Dein Friend hat 'name'
+                                id = friendWithStatus.displayInfo.email ?: "error",    // Dein Friend hat 'id' als PrimaryKey
+                                iconName = friendWithStatus.liveStatus?.iconId ?: "",       // Dein Friend hat 'iconName'
+                                color = colorLong,                                           // Dein Friend hat 'color' als Long
+                                locationName = friendWithStatus.liveStatus?.locationName ?: "" // Dein Friend hat 'locationName'
+
+
+                            ),
+                            {}, // onItemClick - leer gelassen wie in deinem Original
+                            { friendVM.onEvent(FriendScreenUiEvent.RemoveFriend(friendWithStatus.displayInfo.uid)) }
+                        )
+                        Divider()
                     }
                 }
             }
-            val friendsListState by friendVM.friendsListUiState.collectAsState()
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Pending Friend Requests", style = MaterialTheme.typography.titleMedium)
-                if (friendsListState.isLoadingPending) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                }
-                if (friendsListState.pendingRequests.isEmpty() && !friendsListState.isLoadingPending) {
-                    Text("No pending requests.")
-                }
-                friendsListState.pendingRequests.forEach { friendshipWithInfo ->
-                    PendingFriendshipCard(
-                        friendshipWithInfo = friendshipWithInfo,
-                        actions = {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = { friendVM.onEvent(FriendScreenUiEvent.AcceptFriendRequest(friendshipWithInfo.friendship.id)) },
-                                    colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray)) {
-                                    Text("Accept")
-                                }
-                                Button(onClick = { friendVM.onEvent(FriendScreenUiEvent.DeclineFriendRequest(friendshipWithInfo.friendship.id)) },
-                                    colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray)) {
-                                    Text("Decline")
-                                }
+        }
+        val friendsListState by friendVM.friendsListUiState.collectAsState()
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { // Hier auch Arrangement.spacedBy
+            Text("Pending Friend Requests", style = MaterialTheme.typography.titleMedium)
+            if (friendsListState.isLoadingPending) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+            if (friendsListState.pendingRequests.isEmpty() && !friendsListState.isLoadingPending) {
+                Text("No pending requests.")
+            }
+            friendsListState.pendingRequests.forEach { friendshipWithInfo ->
+                PendingFriendshipCard(
+                    friendshipWithInfo = friendshipWithInfo,
+                    actions = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { // Hier auch Arrangement.spacedBy
+                            Button(
+                                onClick = { friendVM.onEvent(FriendScreenUiEvent.AcceptFriendRequest(friendshipWithInfo.friendship.id)) },
+                                colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray) // Beibehaltung deiner ButtonColors-Syntax
+                            ) {
+                                Text("Accept")
+                            }
+                            Button(
+                                onClick = { friendVM.onEvent(FriendScreenUiEvent.DeclineFriendRequest(friendshipWithInfo.friendship.id)) },
+                                colors = ButtonColors(Sekundary, Color.White, Color.White, Color.Gray) // Beibehaltung deiner ButtonColors-Syntax
+                            ) {
+                                Text("Decline")
                             }
                         }
-                    )
-                }
+                    }
+                )
             }
+        }
     }
 }
+
 @Composable
 fun PendingFriendshipCard(
     friendshipWithInfo: FriendshipWithDisplayInfo,

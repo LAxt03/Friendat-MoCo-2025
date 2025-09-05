@@ -1,5 +1,6 @@
 package com.friendat.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.friendat.data.model.FriendStatus
@@ -70,7 +71,24 @@ class FriendLiveStatusViewModel @Inject constructor(
 
         // Kombiniere die beiden Flows
         combine(acceptedFriendsFlow, allLiveStatusesFlow) { friends, statuses ->
+            Log.d("FriendVM_Combine", "Kombiniere Freunde. Status-Map aktuell: $statuses")
             val friendsWithLiveStatus = friends.map { friendDisplayInfo ->
+                val currentFriendUid = friendDisplayInfo.uid
+                val statusForThisFriend: FriendStatus? = statuses[currentFriendUid]
+
+                // !! HIER IST DER WICHTIGSTE LOGGING-PUNKT !!
+                // Logge den spezifischen Status und dessen locationName für jeden Freund
+                if (statusForThisFriend != null) {
+                    Log.i("FriendVM_Combine_Status", "Für Freund UID: $currentFriendUid (${friendDisplayInfo.displayName}), " +
+                            "LiveStatus gefunden: Ja, " +
+                            "LocationName: '${statusForThisFriend.locationName}', " + // In '' um null/leer zu sehen
+                            "isOnline: ${statusForThisFriend.isOnline}, " +
+                            "Icon: ${statusForThisFriend.iconId}, " +
+                            "Color: ${statusForThisFriend.colorHex}")
+                } else {
+                    Log.w("FriendVM_Combine_Status", "Für Freund UID: $currentFriendUid (${friendDisplayInfo.displayName}), " +
+                            "LiveStatus gefunden: Nein (null)")
+                }
                 FriendWithLiveStatus(
                     displayInfo = friendDisplayInfo,
                     liveStatus = statuses[friendDisplayInfo.uid]

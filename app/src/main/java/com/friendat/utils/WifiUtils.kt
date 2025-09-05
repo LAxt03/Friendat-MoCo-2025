@@ -162,10 +162,6 @@ object WifiUtils {
                 !rawBssid.equals(bssidPlaceholder1, ignoreCase = true) &&
                 !rawBssid.equals(bssidPlaceholder2, ignoreCase = true) &&
                 !rawBssid.equals(unknownBssidPlaceholder, ignoreCase = true) &&
-                // Ein leerer oder "<unknown ssid>" SSID ist nicht unbedingt ein Problem für die BSSID-Validität.
-                // Aber ein UNINITIALIZED SupplicantState kann auf Probleme hindeuten,
-                // obwohl wir das hauptsächlich im zweiten Pfad prüfen.
-                // Für BSSID-Validität ist der SSID-Inhalt sekundär.
                 ssid != SupplicantState.UNINITIALIZED.toString() // Dieser Check ist etwas unkonventionell hier, aber kann nicht schaden.
     }
 }

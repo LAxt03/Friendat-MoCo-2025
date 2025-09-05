@@ -64,10 +64,6 @@ class FriendViewModel @Inject constructor(
     private val _friendsListUiState = MutableStateFlow(FriendsListUiState())
     val friendsListUiState: StateFlow<FriendsListUiState> = _friendsListUiState.asStateFlow()
 
-
-    // Aktuelle UserID vom AuthRepository holen (einmalig oder als Flow, wenn sie sich ändern könnte)
-    // Für dieses ViewModel nehmen wir an, dass sie sich während der Lebenszeit des ViewModels nicht ändert
-    // oder wir holen sie bei Bedarf. Für Flows wäre es etwas komplexer.
     private var currentUserId: String? = null
 
     init {
@@ -221,12 +217,8 @@ class FriendViewModel @Inject constructor(
         }
     }
 
-    // Hilfs-Flow, um DisplayInfos für alle relevanten Nutzer in den Freundschaftslisten zu sammeln
-    // und nur einmal abzurufen. Dies ist eine Optimierung.
     private fun getDisplayInfoFlowForFriendships(): StateFlow<Map<String, UserDisplayInfo>> {
-        // Dieser Flow kombiniert die User-IDs aus PENDING und ACCEPTED Listen,
-        // holt deren DisplayInfos und stellt sie als Map bereit.
-        // stateIn wird verwendet, um die Abfrage zu teilen und mehrfach Aufrufe zu vermeiden.
+
         return combine(
             friendRepository.getPendingFriendRequests(currentUserId ?: ""),
             friendRepository.getAcceptedFriends(currentUserId ?: "")
