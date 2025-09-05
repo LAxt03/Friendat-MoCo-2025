@@ -82,6 +82,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+//für testzwecke icons
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.0-alpha07")
 
     // Room
     val room_version = "2.7.2"

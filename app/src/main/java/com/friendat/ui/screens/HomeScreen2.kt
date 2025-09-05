@@ -71,6 +71,12 @@ fun HomeScreen2(
             Text("Logout")
         }
 
+        Button(onClick = {
+            navController.navigate(NavRoute.FriendLiveStatus.route)
+        }) {
+            Text("See Friend Live Status")
+        }
+
        Button(onClick = {
             triggerLocationCheckWorker(context)
        }) {

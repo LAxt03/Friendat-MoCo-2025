@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.friendat.ui.friends.FriendManagementScreen
+import com.friendat.ui.livestatus.FriendLiveStatusScreen
 import com.friendat.ui.screens.AddWifiScreen
 import com.friendat.ui.screens.HomeScreen2
 import com.friendat.ui.screens.LoginScreen
@@ -33,6 +34,10 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+
+        composable(NavRoute.FriendLiveStatus.route) {
+            FriendLiveStatusScreen() // ViewModel wird via Hilt injiziert
         }
 
         composable(route = NavRoute.Home2.route) {
