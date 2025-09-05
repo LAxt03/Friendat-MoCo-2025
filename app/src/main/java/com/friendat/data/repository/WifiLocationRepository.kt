@@ -14,6 +14,8 @@ interface WifiLocationRepository {
 
     suspend fun deleteWifiLocation(locationId: String): Result<Unit>
 
+    fun getWifiLocationsForCurrentUserFromRoom(): Flow<List<WifiLocation>>
+
 }
 
 
