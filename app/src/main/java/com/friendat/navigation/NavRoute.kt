@@ -14,6 +14,7 @@ sealed class NavRoute(val route: String) {
     object WifiLocationsList : NavRoute("wifi_locations_list_screen")
     object AddFriend: NavRoute("add_friend_screen")
     object FriendManagement: NavRoute("friend_management_screen")
+    object FriendLiveStatus: NavRoute("friendLiveStatus")
 
 
     object Home : NavRoute("home")

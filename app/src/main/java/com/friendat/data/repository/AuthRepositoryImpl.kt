@@ -1,6 +1,8 @@
 package com.friendat.data.repository
 
-import android.util.Log // Import für Log hinzugefügt
+import android.app.Application // <<< HINZUGEFÜGT
+import android.util.Log
+import com.friendat.services.MyFirebaseMessagingService // <<< HINZUGEFÜGT (Passe den Pfad an, falls nötig)
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FieldValue
@@ -10,17 +12,16 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
-
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val firestore: FirebaseFirestore // Bereits vorhanden, gut!
+    private val firestore: FirebaseFirestore,
+    private val application: Application // <<< HINZUGEFÜGT
 ) : AuthRepository {
 
     companion object {
-        private const val TAG = "AuthRepositoryImpl" // Für Logging
-        private const val USERS_COLLECTION = "users" // Name deiner Firestore-Sammlung für Nutzer
+        private const val TAG = "AuthRepositoryImpl"
+        private const val USERS_COLLECTION = "users"
     }
 
     override fun getCurrentUser(): FirebaseUser? {
@@ -31,8 +32,11 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             authResult.user?.let { user ->
-                // Nach erfolgreichem Login, Nutzerdokument in Firestore erstellen/aktualisieren
                 createOrUpdateUserDocumentInFirestore(user)
+                // <<< HINZUGEFÜGT vvv
+                Log.i(TAG, "Attempting to send pending FCM token for user ${user.uid} after sign in.")
+                MyFirebaseMessagingService.sendPendingTokenToServerIfNecessary(application, user.uid)
+                // <<< HINZUGEFÜGT ^^^
                 UserAuthResult.Success(user)
             } ?: UserAuthResult.Failure(Exception("Authentication successful, but user is null"))
         } catch (e: Exception) {
@@ -45,8 +49,11 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             authResult.user?.let { user ->
-                // Nach erfolgreicher Registrierung, Nutzerdokument in Firestore erstellen/aktualisieren
                 createOrUpdateUserDocumentInFirestore(user)
+                // <<< HINZUGEFÜGT vvv
+                Log.i(TAG, "Attempting to send pending FCM token for user ${user.uid} after sign up.")
+                MyFirebaseMessagingService.sendPendingTokenToServerIfNecessary(application, user.uid)
+                // <<< HINZUGEFÜGT ^^^
                 UserAuthResult.Success(user)
             } ?: UserAuthResult.Failure(Exception("Registration successful, but user is null"))
         } catch (e: Exception) {
@@ -65,27 +72,19 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-
     private suspend fun createOrUpdateUserDocumentInFirestore(user: FirebaseUser) {
-        // Die Dokument-ID in der 'users'-Sammlung ist die UID des Firebase-Nutzers
         val userDocRef = firestore.collection(USERS_COLLECTION).document(user.uid)
-
         val userData = hashMapOf(
             "uid" to user.uid,
             "email" to user.email,
             "displayName" to user.displayName,
             "createdAt" to FieldValue.serverTimestamp()
         )
-
         try {
-
             userDocRef.set(userData, SetOptions.merge()).await()
             Log.d(TAG, "User document created/updated in Firestore for UID: ${user.uid}")
         } catch (e: Exception) {
             Log.e(TAG, "Error creating/updating user document in Firestore for UID: ${user.uid}", e)
-
         }
     }
-
-
 }

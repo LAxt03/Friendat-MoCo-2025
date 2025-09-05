@@ -3,6 +3,8 @@ package com.friendat.di // Dein Paketname für DI-Module
 import android.content.Context
 import androidx.room.Room
 import com.friendat.data.sources.local.AppDatabase
+import com.friendat.data.sources.local.MIGRATION_1_2
+import com.friendat.data.sources.local.dao.FriendStatusDao
 import com.friendat.data.sources.local.dao.WifiLocationDao
 import dagger.Module
 import dagger.Provides
@@ -23,6 +25,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "friendat_database" // Wähle einen Namen für deine Datenbankdatei
         )
+            .addMigrations(MIGRATION_1_2)
             // .fallbackToDestructiveMigration() // NUR FÜR ENTWICKLUNG: Löscht die DB bei Versionskonflikt
             // Für Produktion Migrationsstrategien implementieren!
             .build()
@@ -32,5 +35,11 @@ object DatabaseModule {
     @Singleton // Das DAO wird auch als Singleton im Kontext der Datenbank bereitgestellt
     fun provideWifiLocationDao(appDatabase: AppDatabase): WifiLocationDao {
         return appDatabase.wifiLocationDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFriendStatusDao(appDatabase: AppDatabase): FriendStatusDao { // <<< NEUE PROVIDER-METHODE
+        return appDatabase.friendStatusDao()
     }
 }

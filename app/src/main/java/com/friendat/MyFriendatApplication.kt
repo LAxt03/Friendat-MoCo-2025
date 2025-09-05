@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration // Import für Configuration
+import com.friendat.utils.FileLogger
 // Kein separater Import für Configuration.Provider mehr nötig, wenn man direkt die Eigenschaft überschreibt
 import com.friendat.utils.NetworkChangeCallback // Stelle sicher, dass der Pfad korrekt ist
 import dagger.hilt.android.HiltAndroidApp
@@ -32,12 +33,24 @@ class MyFriendatApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        FileLogger.logAppCreate(applicationContext, "onCreate() CALLED - START")
+
+
+        FileLogger.clearAllLogs(applicationContext)
+        FileLogger.logAppCreate(applicationContext, "Previous logs cleared (if any).")
+
+
+
+
         // WorkManager wird initialisiert, wenn es zum ersten Mal benötigt wird,
         // und verwendet dabei die workManagerConfiguration oben.
         registerNetworkCallback()
+        FileLogger.logAppCreate(applicationContext, "onCreate() - NetworkChangeCallback registration attempted.") // Datei-Log
+        FileLogger.logAppCreate(applicationContext, "onCreate() FINISHED") // Log am Ende
     }
 
     private fun registerNetworkCallback() {
+        FileLogger.logAppCreate(applicationContext, "registerNetworkCallback() CALLED")
         networkChangeCallback = NetworkChangeCallback(applicationContext)
         val connectivityManager =
             getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
