@@ -30,7 +30,7 @@ fun AppNavigation(
             LoginScreen(
                 navController = navController,
                 onLoginSuccess = { // Callback vom LoginScreen bei Erfolg
-                    navController.navigate(NavRoute.Home2.route) {
+                    navController.navigate(NavRoute.Home.route) {
                         popUpTo(NavRoute.Login.route) { inclusive = true }
                     }
                 }

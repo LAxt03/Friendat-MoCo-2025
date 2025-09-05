@@ -29,7 +29,8 @@ fun FriendCard(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(3.dp))
-            .padding(3.dp),
+            .padding(3.dp)
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Avatar(friend.getIcon(), friend.getColor(), editClick)

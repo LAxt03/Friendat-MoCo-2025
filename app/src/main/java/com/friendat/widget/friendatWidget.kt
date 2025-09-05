@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.annotation.DimenRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -40,13 +42,16 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.Text
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.room.util.TableInfo
 import com.friendat.R
 import com.friendat.model.database.entity.Friend
 import com.friendat.model.getColor
 import com.friendat.model.getIcon
 import com.friendat.model.nameToResId
+import com.friendat.ui.livestatus.FriendLiveStatusViewModel
 import com.friendat.ui.theme.Primary
+import com.friendat.ui.viewmodel.FriendViewModel
 
 class MyAppWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = friendatWidget()
@@ -72,6 +77,7 @@ class friendatWidget : GlanceAppWidget() {
         context: Context,
         id: GlanceId
     ) {
+
         provideContent {
             // create your AppWidget here
 
