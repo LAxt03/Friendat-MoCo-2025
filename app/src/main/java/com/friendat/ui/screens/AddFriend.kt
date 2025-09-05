@@ -97,7 +97,7 @@ fun AddFriend2(
             }
             var requestSend by remember { mutableStateOf(false) }
             searchState.searchResultUser?.let { user ->
-                if (user.uid.isNotBlank()) {
+                if (user.uid.isNotBlank()==!requestSend) {
                     viewModel.onEvent(FriendScreenUiEvent.SendFriendRequest(user.uid))
                     requestSend = true
 
