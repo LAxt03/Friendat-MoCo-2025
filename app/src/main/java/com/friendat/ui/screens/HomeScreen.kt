@@ -1,5 +1,12 @@
 package com.friendat.ui.screens
 
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.Interaction
@@ -18,9 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.friendat.model.database.entity.Friend
@@ -38,6 +48,7 @@ import com.friendat.ui.viewmodel.FriendViewModel
 import com.friendat.ui.viewmodel.FriendsListUiState
 import com.friendat.ui.viewmodel.WifiLocationListUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel
+import com.friendat.utils.WifiUtils
 
 
 @Composable
@@ -45,6 +56,10 @@ fun HomeScreen(navController: NavController,
                viewModelWifiLocation: WifiLocationsViewModel = hiltViewModel(),
                viewModelFriend: FriendViewModel = hiltViewModel(),
                authViewModel: AuthViewModel = hiltViewModel()) {
+
+    val context = LocalContext.current
+    val activity = LocalContext.current as? Activity
+
     val locationsState by viewModelWifiLocation.wifiLocationsState.collectAsState()
     val actionState by viewModelWifiLocation.wifiLocationActionState.collectAsState()
 
@@ -55,6 +70,73 @@ fun HomeScreen(navController: NavController,
 
     val searchState by viewModelFriend.userSearchResultUiState.collectAsState()
     val friendsListState by viewModelFriend.friendsListUiState.collectAsState()
+
+    var showRationaleDialog by remember { mutableStateOf(false) }
+    var showSettingsRedirectDialog by remember { mutableStateOf(false) }
+
+    val permissionsToRequest = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    fun navigateToIdentifierAddScreen(navController: NavController, detectedIdentifier: String?) {
+        val targetRoute = NavRoute.AddWifi.createRoute(detectedIdentifier) // Deine NavRoute.AddWifi.createRoute
+        Log.d("WifiLocationsListScreen", "Navigating to target route: $targetRoute")
+        navController.navigate(targetRoute)
+    }
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissionsMap ->
+            val fineLocationGranted = permissionsMap[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+
+            if (fineLocationGranted) {
+                Log.d("WifiLocationsListScreen", "ACCESS_FINE_LOCATION GRANTED after request")
+                val identifier = WifiUtils.getCurrentBssid(context) // Hole BSSID
+                // feedbackMessage = "BSSID: $identifier. Navigating..." // Optional
+                navigateToIdentifierAddScreen(navController, identifier)
+            } else {
+                Log.d("WifiLocationsListScreen", "ACCESS_FINE_LOCATION DENIED after request")
+                // feedbackMessage = "Precise location permission is required..." // Optional
+
+                if (activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    Log.d("WifiLocationsListScreen", "Permission likely denied permanently.")
+                    showSettingsRedirectDialog = true
+                } else {
+                    showRationaleDialog = true
+                }
+            }
+        }
+    )
+
+
+    fun performPermissionRequestAndNavigate() {
+        // feedbackMessage = null // Optional zurücksetzen
+        val fineLocationGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+        if (fineLocationGranted) {
+            Log.d("WifiLocationsListScreen", "Fine location already granted. Getting BSSID.")
+            val identifier = WifiUtils.getCurrentBssid(context)
+            // feedbackMessage = "BSSID: $identifier. Navigating..." // Optional
+            navigateToIdentifierAddScreen(navController, identifier)
+        } else {
+            Log.d("WifiLocationsListScreen", "Fine location not granted. Checking rationale.")
+            if (activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Log.d("WifiLocationsListScreen", "Showing rationale dialog.")
+                showRationaleDialog = true
+            } else {
+                Log.d("WifiLocationsListScreen", "No rationale needed or first time. Requesting permissions.")
+                permissionLauncher.launch(permissionsToRequest)
+            }
+        }
+    }
 
     // Globale Fehlermeldung aus friendsListState anzeigen
     LaunchedEffect(friendsListState.errorMessage) {
@@ -149,7 +231,7 @@ fun HomeScreen(navController: NavController,
         FloatingActionButton(
             onClick = {when(selectedTab){
                 0-> navController.navigate(NavRoute.AddFriend.route)
-                1-> navController.navigate(NavRoute.AddWifi.route)
+                1-> performPermissionRequestAndNavigate()
                 }
             },
             modifier = Modifier
@@ -160,6 +242,7 @@ fun HomeScreen(navController: NavController,
             Icon(Icons.Default.Add, contentDescription = "Add")
         }
     }
+
 }
 
 

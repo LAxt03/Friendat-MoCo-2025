@@ -35,7 +35,7 @@ import com.friendat.ui.viewmodel.FriendViewModel
 import com.friendat.ui.viewmodel.UserSearchResultUiState
 
 @Composable
-fun AddFriend(
+fun AddFriend(//Depricated
     userId:String,
     cancel:()-> Unit
 ){
