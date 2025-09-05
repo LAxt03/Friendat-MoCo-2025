@@ -8,25 +8,20 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,22 +30,15 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.friendat.data.model.FriendshipStatus
-import com.friendat.model.database.entity.Friend
+import com.friendat.data.model.Friend
 import com.friendat.navigation.NavRoute
 import com.friendat.ui.composables.FriendCard
 import com.friendat.ui.composables.WifiCard
-import com.friendat.ui.friends.AcceptedFriendsSection
-import com.friendat.ui.friends.FriendshipCard
-import com.friendat.ui.friends.PendingRequestsSection
-import com.friendat.ui.friends.UserSearchSection
-import com.friendat.ui.livestatus.FriendLiveStatusCard
-import com.friendat.ui.livestatus.FriendLiveStatusViewModel
 import com.friendat.ui.theme.*
 import com.friendat.ui.viewmodel.AuthViewModel
+import com.friendat.ui.viewmodel.FriendLiveStatusViewModel
 import com.friendat.ui.viewmodel.FriendScreenUiEvent
 import com.friendat.ui.viewmodel.FriendViewModel
-import com.friendat.ui.viewmodel.FriendsListUiState
 import com.friendat.ui.viewmodel.FriendshipWithDisplayInfo
 import com.friendat.ui.viewmodel.WifiLocationListUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel
@@ -260,7 +248,7 @@ fun HomeScreen(navController: NavController,
 
 
 @Composable
-fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(),friendVM: FriendViewModel=hiltViewModel()) {
+fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(), friendVM: FriendViewModel=hiltViewModel()) {
     Column(Modifier.fillMaxWidth()) {
             val uiState by viewModel.uiState.collectAsState()
             val paddingValues by remember {mutableStateOf(3.dp) }
@@ -299,11 +287,18 @@ fun FriendsScreen(viewModel: FriendLiveStatusViewModel = hiltViewModel(),friendV
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(uiState.friendsWithStatus, key = { it.displayInfo.uid }) { friendWithStatus ->
-                            FriendCard(Friend(friendWithStatus.displayInfo.displayName?:"error",
-                                friendWithStatus.displayInfo.email?:"error",
-                                friendWithStatus.liveStatus?.iconId?:"error",
-                                friendWithStatus.liveStatus?.colorHex?.toLong()?:Color(100,100,100).value.toLong(),
-                                friendWithStatus.liveStatus?.locationName?:"error"),{},
+                            FriendCard(
+                                Friend(
+                                    friendWithStatus.displayInfo.displayName ?: "error",
+                                    friendWithStatus.displayInfo.email ?: "error",
+                                    friendWithStatus.liveStatus?.iconId ?: "error",
+                                    friendWithStatus.liveStatus?.colorHex?.toLong() ?: Color(
+                                        100,
+                                        100,
+                                        100
+                                    ).value.toLong(),
+                                    friendWithStatus.liveStatus?.locationName ?: "error"
+                                ),{},
                                 {friendVM.onEvent(FriendScreenUiEvent.RemoveFriend(friendWithStatus.displayInfo.uid)) }
                             )
                             Divider()
