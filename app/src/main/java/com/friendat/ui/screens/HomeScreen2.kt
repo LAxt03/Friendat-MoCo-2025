@@ -71,9 +71,14 @@ fun HomeScreen2(
             Text("Placeholder Action (z.B. Logout)")
         }
 
-       Button(onClick = {
+        Button(onClick = {
             triggerLocationCheckWorker(context)
-       }) {
+        }) {
+            Text("Test Location Worker")
+        }
+        Button(onClick = {
+            navController.navigate(NavRoute.Home.route)
+        }) {
             Text("Test Location Worker")
         }
 
