@@ -9,6 +9,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.friendat.data.model.LastSentLocationStatus // Dein Modell
+import com.friendat.data.model.WifiLocation // Importiere dein WifiLocation-Modell
 import com.friendat.data.repository.LastStatusRepository // Dein Repository
 import com.friendat.data.sources.local.dao.WifiLocationDao
 import com.friendat.utils.FileLogger
@@ -27,30 +28,32 @@ class LocationCheckWorker @AssistedInject constructor(
     private val wifiLocationDao: WifiLocationDao,
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
-    private val lastStatusRepository: LastStatusRepository // Wird über dein RepositoryModule bereitgestellt
+    private val lastStatusRepository: LastStatusRepository
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
         const val TAG = "LocationCheckWorker"
-        const val USER_STATUS_COLLECTION = "user_status" // Deine Firestore Collection für den User-Status
+        const val USER_STATUS_COLLECTION = "user_status"
+        const val DEFAULT_ICON_ID = "default_icon" // Standard-Icon, falls kein bekanntes WLAN
+        const val DEFAULT_COLOR_HEX = "#CCCCCC"   // Standard-Farbe
+        const val OFFLINE_ICON_ID = "ic_wifi_off" // Beispiel-Icon für Offline-Status
+        const val OFFLINE_COLOR_HEX = "#808080"   // Beispiel-Farbe für Offline
     }
 
     override suspend fun doWork(): Result {
         FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Worker execution started.")
         Log.d(TAG, "[FOCUS_WLAN_AN] Worker execution started.")
 
-        // 1. Authentifizierten Benutzer holen
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] No authenticated user. Worker cannot proceed.")
-            Log.w(TAG, "[FOCUS_WLAN_AN] No authenticated user. Worker cannot proceed.")
+            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] No authenticated user.")
+            Log.w(TAG, "[FOCUS_WLAN_AN] No authenticated user.")
             return Result.failure()
         }
         val userId = currentUser.uid
         FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User ID: $userId")
         Log.d(TAG, "[FOCUS_WLAN_AN] User ID: $userId")
 
-        // 2. Berechtigung prüfen
         if (ContextCompat.checkSelfPermission(
                 appContext,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -58,87 +61,112 @@ class LocationCheckWorker @AssistedInject constructor(
         ) {
             FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] ACCESS_FINE_LOCATION permission not granted.")
             Log.e(TAG, "[FOCUS_WLAN_AN] ACCESS_FINE_LOCATION permission not granted.")
-            // Ohne Berechtigung können wir die BSSID nicht zuverlässig bekommen.
-            // Sende "offline" oder einen undefinierten Status.
-            updateFirestoreStatus(userId, null, null, false)
-            return Result.success() // Dennoch Success, da der Worker seine Aufgabe (Status setzen) erledigt hat
+            // Sende "offline" Status mit Standard-Offline-Icon/Farbe
+            return updateFirestoreStatus(userId, null, null, false, OFFLINE_ICON_ID, OFFLINE_COLOR_HEX)
         }
 
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Attempting to get BSSID from WifiUtils.")
-        // 3. Aktuelle BSSID und bekannten Ort ermitteln
+        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Attempting to get BSSID.")
         val currentBssid = WifiUtils.getCurrentBssid(appContext)
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Current BSSID from WifiUtils: $currentBssid")
-        Log.d(TAG, "[FOCUS_WLAN_AN] Current BSSID from WifiUtils: $currentBssid")
+        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Current BSSID: $currentBssid")
+        Log.d(TAG, "[FOCUS_WLAN_AN] Current BSSID: $currentBssid")
 
         var currentEffectiveLocationName: String? = null
-        // var currentEffectiveLocationIcon: String? = null // Dein WifiLocation hat iconId
+        var currentEffectiveIconId: String? = null      // <<< NEU
+        var currentEffectiveColorHex: String? = null    // <<< NEU
         var isAtKnownLocation = false
 
-        if (currentBssid != null) {
-            val knownLocations = try {
-                // Diese Methode gibt direkt List<WifiLocation> zurück, das ist gut.
-
-                wifiLocationDao.getAllLocationsForUserSuspend(userId)
+        val currentRecognizedLocation: WifiLocation? = if (currentBssid != null) {
+            try {
+                val knownLocations = wifiLocationDao.getAllLocationsForUserSuspend(userId)
+                Log.d(TAG, "[FOCUS_WLAN_AN] Found ${knownLocations.size} known locations for user $userId.")
+                knownLocations.find { it.bssid.equals(currentBssid, ignoreCase = true) }
             } catch (e: Exception) {
                 Log.e(TAG, "[FOCUS_WLAN_AN] Error fetching known locations for user $userId from DB.", e)
-                return Result.retry() // DB-Problem, später erneut versuchen
-            }
-            Log.d(TAG, "[FOCUS_WLAN_AN] Found ${knownLocations.size} known locations for user $userId.")
-
-            val currentRecognizedLocation = knownLocations.find {
-                it.bssid.equals(currentBssid, ignoreCase = true)
-            }
-
-            if (currentRecognizedLocation != null) {
-                currentEffectiveLocationName = currentRecognizedLocation.name
-                // currentEffectiveLocationIcon = currentRecognizedLocation.iconId
-                isAtKnownLocation = true
-                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User is at known location: '$currentEffectiveLocationName'")
-                Log.i(TAG, "[FOCUS_WLAN_AN] User is at known location: '$currentEffectiveLocationName' (BSSID: $currentBssid)")
-            } else {
-                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User is on an unknown WiFi.")
-                Log.i(TAG, "[FOCUS_WLAN_AN] User is on an unknown WiFi (BSSID: $currentBssid). Location name will be null.")
-                // currentEffectiveLocationName bleibt null
+                return Result.retry()
             }
         } else {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User is not connected to any WiFi network.")
-            Log.i(TAG, "[FOCUS_WLAN_AN] User is not connected to any WiFi network. Location name will be null.")
-            // currentEffectiveLocationName bleibt null
+            null
         }
 
-        // 4. Letzten *an Firestore gesendeten* Status laden (optional, aber gut zum Vergleichen)
+        if (currentRecognizedLocation != null) {
+            currentEffectiveLocationName = currentRecognizedLocation.name
+            currentEffectiveIconId = currentRecognizedLocation.iconId    // <<< GESETZT
+            currentEffectiveColorHex = currentRecognizedLocation.colorHex  // <<< GESETZT
+            isAtKnownLocation = true
+            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User at known location: '${currentEffectiveLocationName}', Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
+            Log.i(TAG, "[FOCUS_WLAN_AN] User at known location: '${currentEffectiveLocationName}' (BSSID: $currentBssid), Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
+        } else {
+            // Nicht an einem bekannten Ort ODER kein WLAN
+            isAtKnownLocation = false // Explizit setzen
+            if (currentBssid != null) {
+                // Mit unbekanntem WLAN verbunden
+                currentEffectiveLocationName = null // oder "Unknown Wi-Fi"
+                currentEffectiveIconId = DEFAULT_ICON_ID
+                currentEffectiveColorHex = DEFAULT_COLOR_HEX
+                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User on unknown WiFi. Using defaults.")
+                Log.i(TAG, "[FOCUS_WLAN_AN] User on unknown WiFi (BSSID: $currentBssid). Location name null, Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
+            } else {
+                // Nicht mit irgendeinem WLAN verbunden
+                currentEffectiveLocationName = null // Oder "Offline"
+                currentEffectiveIconId = OFFLINE_ICON_ID
+                currentEffectiveColorHex = OFFLINE_COLOR_HEX
+                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User not connected to any WiFi. Using offline defaults.")
+                Log.i(TAG, "[FOCUS_WLAN_AN] User not connected to any WiFi. Location name null, Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
+            }
+        }
+
         val lastSavedStatus = lastStatusRepository.getLastSentStatus(appContext)
         Log.d(TAG, "[FOCUS_WLAN_AN] Last locally saved status: $lastSavedStatus")
         FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Last locally saved status: $lastSavedStatus")
 
-        // 5. IMMER SENDEN oder nur bei Änderung? Für das "WLAN AN"-Problem ist es sicherer,
-        //    bei jedem Durchlauf den aktuellen Zustand zu senden, es sei denn, er ist EXAKT gleich.
-        //    Dies vermeidet, dass ein alter "null"-Status in Firebase hängen bleibt.
-
-        // Wir prüfen, ob der NEU ermittelte Status sich vom ZULETZT LOKAL GESPEICHERTEN unterscheidet.
-        // Der Timestamp im lastSavedStatus wird hier ignoriert.
-        val statusContentHasChanged = lastSavedStatus == null ||
+        // Erweiterter Vergleich, falls dein LastSentLocationStatus auch Icon/Farbe enthält
+        // Fürs Erste vergleichen wir nur die Basisdaten. Wenn sich die Basisdaten ändern,
+        // werden Icon/Farbe sowieso mit dem neuen Stand gesendet.
+        // Wenn du willst, dass *nur* eine Icon/Farbänderung auch ein Update auslöst,
+        // müsstest du LastSentLocationStatus erweitern und hier abfragen.
+        val statusBaseContentHasChanged = lastSavedStatus == null ||
                 lastSavedStatus.bssid != currentBssid ||
                 lastSavedStatus.locationName != currentEffectiveLocationName
-        // || lastSavedStatus.locationIcon != currentEffectiveLocationIcon
+        // Optional: || lastSavedStatus.iconId != currentEffectiveIconId
+        // Optional: || lastSavedStatus.colorHex != currentEffectiveColorHex
 
-        if (statusContentHasChanged) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED. Updating Firestore.")
-            Log.i(TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED (or first run). Updating Firestore.")
+        // Wir senden immer, wenn sich der Basiszustand geändert hat,
+        // ODER wenn der letzte gesendete Status null war (erster Lauf),
+        // ODER wenn der aktuelle Zustand "bekannter Ort" ist und der letzte nicht (oder umgekehrt),
+        // um sicherzustellen, dass Icon/Farbe korrekt sind, falls sie sich geändert haben,
+        // ohne dass sich BSSID/Name geändert hat (z.B. Nutzer editiert Ort).
+        // Eine noch robustere Prüfung wäre, auch Icon/Farbe im `lastSavedStatus` zu speichern und zu vergleichen.
+        // Fürs Erste ist `statusBaseContentHasChanged` ein guter Indikator.
+        // Wenn `isAtKnownLocation` sich ändert, impliziert das meist auch eine Icon/Farb-Änderung.
+
+        val shouldUpdateFirestore = statusBaseContentHasChanged ||
+                (isAtKnownLocation && lastSavedStatus?.locationName == null && currentEffectiveLocationName != null) || // Von unbekannt/offline zu bekannt
+                (!isAtKnownLocation && lastSavedStatus?.locationName != null) // Von bekannt zu unbekannt/offline
+
+        if (shouldUpdateFirestore) {
+            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED or significant state difference. Updating Firestore.")
+            Log.i(TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED (or first run/significant difference). Updating Firestore.")
             Log.d(TAG, "[FOCUS_WLAN_AN] Old Local: BSSID=${lastSavedStatus?.bssid}, Name=${lastSavedStatus?.locationName}")
-            Log.d(TAG, "[FOCUS_WLAN_AN] New State: BSSID=$currentBssid, Name=$currentEffectiveLocationName")
+            Log.d(TAG, "[FOCUS_WLAN_AN] New State: BSSID=$currentBssid, Name=$currentEffectiveLocationName, Icon=$currentEffectiveIconId, Color=$currentEffectiveColorHex")
 
-            return updateFirestoreStatus(userId, currentEffectiveLocationName, currentBssid, isAtKnownLocation)
+            return updateFirestoreStatus(
+                userId,
+                currentEffectiveLocationName,
+                currentBssid,
+                isAtKnownLocation,
+                currentEffectiveIconId,    // <<< ÜBERGEBEN
+                currentEffectiveColorHex   // <<< ÜBERGEBEN
+            )
         } else {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] NO CHANGE detected.")
-            Log.i(TAG, "[FOCUS_WLAN_AN] NO CHANGE detected compared to last locally saved status. Firestore update not strictly needed, but local timestamp will be updated.")
-            // Aktualisiere trotzdem den Timestamp des lokalen Status, um zu zeigen, dass der Zustand bestätigt wurde.
-            // Dies ist für die *vereinfachte* Version nicht zwingend, aber gute Praxis.
+            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] NO significant CHANGE detected.")
+            Log.i(TAG, "[FOCUS_WLAN_AN] NO significant CHANGE detected. Firestore update not strictly needed. Local timestamp will be updated.")
             val confirmedStatus = LastSentLocationStatus(
                 bssid = currentBssid,
                 locationName = currentEffectiveLocationName,
-                // locationIcon = currentEffectiveLocationIcon,
-                timestamp = System.currentTimeMillis() // Update timestamp
+                // Wenn du Icon/Farbe im lokalen Status speichern und vergleichen willst, füge sie hier hinzu:
+                // iconId = currentEffectiveIconId,
+                // colorHex = currentEffectiveColorHex,
+                timestamp = System.currentTimeMillis()
             )
             lastStatusRepository.saveLastSentStatus(appContext, confirmedStatus)
             Log.d(TAG, "[FOCUS_WLAN_AN] Updated local status timestamp: $confirmedStatus")
@@ -147,39 +175,38 @@ class LocationCheckWorker @AssistedInject constructor(
         }
     }
 
-    /**
-     * Hilfsfunktion zum Aktualisieren von Firestore und dem lokalen Status.
-     */
     private suspend fun updateFirestoreStatus(
         userId: String,
         locationName: String?,
         bssid: String?,
-        isAtKnownLoc: Boolean
-        // locationIcon: String? // Wenn du es in Firestore speichern willst
+        isAtKnownLoc: Boolean,
+        iconId: String?,      // <<< PARAMETER HINZUGEFÜGT
+        colorHex: String?     // <<< PARAMETER HINZUGEFÜGT
     ): Result {
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] updateFirestoreStatus CALLED with Name='$locationName', BSSID='$bssid'")
-        val statusUpdateData = hashMapOf(
-            "userId" to userId,
+        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] updateFirestoreStatus CALLED with Name='$locationName', BSSID='$bssid', Icon='$iconId', Color='$colorHex'")
+        val statusUpdateData = hashMapOf<String, Any?>( // Any? um Null-Werte explizit zu erlauben
+            // "userId" to userId, // Redundant, da es die Document ID ist, kann aber bleiben.
             "currentLocationName" to locationName,
-            // "currentLocationIcon" to locationIcon,
             "currentBssid" to bssid,
             "isOnlineAtLocation" to isAtKnownLoc,
+            "currentIconId" to iconId,          // <<< IN MAP HINZUGEFÜGT
+            "currentColorHex" to colorHex,      // <<< IN MAP HINZUGEFÜGT
             "timestamp" to FieldValue.serverTimestamp()
         )
 
         return try {
             firestore.collection(USER_STATUS_COLLECTION).document(userId)
-                .set(statusUpdateData)
+                .set(statusUpdateData) // .set überschreibt das Dokument komplett mit diesen Daten
                 .await()
             FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Successfully updated Firestore. Saving local status.")
-            Log.i(TAG, "[FOCUS_WLAN_AN] Successfully updated status in Firestore for user $userId: Name='$locationName', BSSID='$bssid'")
+            Log.i(TAG, "[FOCUS_WLAN_AN] Successfully updated status in Firestore for user $userId: Data=$statusUpdateData")
 
-            // Nach erfolgreichem Senden den neuen Status lokal speichern
             val newLocalStatusToSave = LastSentLocationStatus(
                 bssid = bssid,
                 locationName = locationName,
-                // locationIcon = locationIcon,
-                timestamp = System.currentTimeMillis() // Wichtig für den Vergleich im nächsten Lauf
+                // iconId = iconId, // Optional hier speichern, wenn für Vergleich benötigt
+                // colorHex = colorHex, // Optional hier speichern, wenn für Vergleich benötigt
+                timestamp = System.currentTimeMillis()
             )
             lastStatusRepository.saveLastSentStatus(appContext, newLocalStatusToSave)
             Log.d(TAG, "[FOCUS_WLAN_AN] Saved new status locally (after Firestore update): $newLocalStatusToSave")

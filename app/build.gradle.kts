@@ -44,26 +44,29 @@ android {
 }
 
 dependencies {
-    // Firebase BOM sorgt dafür, dass alle Firebase libs kompatibel sind
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-
-    // Firebase Auth
     implementation("com.google.firebase:firebase-auth-ktx")
-
-    // Firestore
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
 
+    // Worker
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
+    //hilt
     implementation("com.google.dagger:hilt-android:2.57.1")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
     ksp("com.google.dagger:hilt-compiler:2.57.1")
     implementation("androidx.hilt:hilt-work:1.2.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    //navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("com.google.code.gson:gson:2.10.1")
+
+    //coroutine
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
+    implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
