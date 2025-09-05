@@ -1,4 +1,4 @@
-package com.friendat.work // Stelle sicher, dass dies dein korrekter Paketname ist
+package com.friendat.work
 
 import android.Manifest
 import android.content.Context
@@ -8,9 +8,9 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.friendat.data.model.LastSentLocationStatus // Dein Modell
-import com.friendat.data.model.WifiLocation // Importiere dein WifiLocation-Modell
-import com.friendat.data.repository.LastStatusRepository // Dein Repository
+import com.friendat.data.model.LastSentLocationStatus
+import com.friendat.data.model.WifiLocation
+import com.friendat.data.repository.LastStatusRepository
 import com.friendat.data.sources.local.dao.WifiLocationDao
 import com.friendat.utils.WifiUtils
 import com.google.firebase.auth.FirebaseAuth
@@ -108,25 +108,11 @@ class LocationCheckWorker @AssistedInject constructor(
         val lastSavedStatus = lastStatusRepository.getLastSentStatus(appContext)
         Log.d(TAG, "[FOCUS_WLAN_AN] Last locally saved status: $lastSavedStatus")
 
-        // Erweiterter Vergleich, falls dein LastSentLocationStatus auch Icon/Farbe enthält
-        // Fürs Erste vergleichen wir nur die Basisdaten. Wenn sich die Basisdaten ändern,
-        // werden Icon/Farbe sowieso mit dem neuen Stand gesendet.
-        // Wenn du willst, dass *nur* eine Icon/Farbänderung auch ein Update auslöst,
-        // müsstest du LastSentLocationStatus erweitern und hier abfragen.
+
         val statusBaseContentHasChanged = lastSavedStatus == null ||
                 lastSavedStatus.bssid != currentBssid ||
                 lastSavedStatus.locationName != currentEffectiveLocationName
-        // Optional: || lastSavedStatus.iconId != currentEffectiveIconId
-        // Optional: || lastSavedStatus.colorHex != currentEffectiveColorHex
 
-        // Wir senden immer, wenn sich der Basiszustand geändert hat,
-        // ODER wenn der letzte gesendete Status null war (erster Lauf),
-        // ODER wenn der aktuelle Zustand "bekannter Ort" ist und der letzte nicht (oder umgekehrt),
-        // um sicherzustellen, dass Icon/Farbe korrekt sind, falls sie sich geändert haben,
-        // ohne dass sich BSSID/Name geändert hat (z.B. Nutzer editiert Ort).
-        // Eine noch robustere Prüfung wäre, auch Icon/Farbe im `lastSavedStatus` zu speichern und zu vergleichen.
-        // Fürs Erste ist `statusBaseContentHasChanged` ein guter Indikator.
-        // Wenn `isAtKnownLocation` sich ändert, impliziert das meist auch eine Icon/Farb-Änderung.
 
         val shouldUpdateFirestore = statusBaseContentHasChanged ||
                 (isAtKnownLocation && lastSavedStatus?.locationName == null && currentEffectiveLocationName != null) || // Von unbekannt/offline zu bekannt
@@ -150,9 +136,7 @@ class LocationCheckWorker @AssistedInject constructor(
             val confirmedStatus = LastSentLocationStatus(
                 bssid = currentBssid,
                 locationName = currentEffectiveLocationName,
-                // Wenn du Icon/Farbe im lokalen Status speichern und vergleichen willst, füge sie hier hinzu:
-                // iconId = currentEffectiveIconId,
-                // colorHex = currentEffectiveColorHex,
+
                 timestamp = System.currentTimeMillis()
             )
             lastStatusRepository.saveLastSentStatus(appContext, confirmedStatus)
@@ -170,7 +154,6 @@ class LocationCheckWorker @AssistedInject constructor(
         colorHex: String?     // <<< PARAMETER HINZUGEFÜGT
     ): Result {
         val statusUpdateData = hashMapOf<String, Any?>( // Any? um Null-Werte explizit zu erlauben
-            // "userId" to userId, // Redundant, da es die Document ID ist, kann aber bleiben.
             "currentLocationName" to locationName,
             "currentBssid" to bssid,
             "isOnlineAtLocation" to isAtKnownLoc,
@@ -188,8 +171,6 @@ class LocationCheckWorker @AssistedInject constructor(
             val newLocalStatusToSave = LastSentLocationStatus(
                 bssid = bssid,
                 locationName = locationName,
-                // iconId = iconId, // Optional hier speichern, wenn für Vergleich benötigt
-                // colorHex = colorHex, // Optional hier speichern, wenn für Vergleich benötigt
                 timestamp = System.currentTimeMillis()
             )
             lastStatusRepository.saveLastSentStatus(appContext, newLocalStatusToSave)
