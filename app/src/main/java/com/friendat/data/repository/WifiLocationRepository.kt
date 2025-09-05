@@ -1,7 +1,7 @@
 package com.friendat.data.repository
 
-import com.friendat.data.model.WifiLocation // Dein Datenmodell
-import kotlinx.coroutines.flow.Flow // Für reaktive Datenströme von Firestore
+import com.friendat.data.model.WifiLocation
+import kotlinx.coroutines.flow.Flow
 
 
 interface WifiLocationRepository {

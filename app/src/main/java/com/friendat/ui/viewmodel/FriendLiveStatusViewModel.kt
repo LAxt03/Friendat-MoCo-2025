@@ -1,12 +1,12 @@
-package com.friendat.ui.livestatus // Beispielpaket
+package com.friendat.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.friendat.data.model.FriendStatus
 import com.friendat.data.model.UserDisplayInfo
 import com.friendat.data.repository.AuthRepository
-import com.friendat.data.repository.FriendRepository // Für die Liste der Freunde
-import com.friendat.data.sources.local.dao.FriendStatusDao // Direkt den DAO für Status
+import com.friendat.data.repository.FriendRepository
+import com.friendat.data.sources.local.dao.FriendStatusDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -35,6 +35,7 @@ class FriendLiveStatusViewModel @Inject constructor(
 
     // StateFlow für den kombinierten UI-Zustand
     val uiState: StateFlow<FriendLiveStatusUiState> = flow {
+
         // Zuerst die aktuelle UserID holen
         currentUserId = authRepository.getCurrentUser()?.uid
         if (currentUserId == null) {
@@ -80,7 +81,7 @@ class FriendLiveStatusViewModel @Inject constructor(
             .catch { e -> // Fehlerbehandlung für den kombinierten Flow
                 emit(FriendLiveStatusUiState(isLoading = false, errorMessage = e.message ?: "Error loading live statuses"))
             }
-            .collect { emit(it) } // Emittiere den kombinierten Zustand
+            .collect { emit(it) } // Gib den kombinierten UI-Zustand weiter
     }
         .stateIn(
             scope = viewModelScope,

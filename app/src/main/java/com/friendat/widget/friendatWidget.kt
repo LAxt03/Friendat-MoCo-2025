@@ -1,23 +1,18 @@
 package com.friendat.widget
 
 import android.content.Context
-import androidx.annotation.DimenRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.glance.AndroidResourceImageProvider
 import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
@@ -26,26 +21,20 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.lazy.LazyColumn
-import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.layout.width
 import androidx.glance.text.Text
-import androidx.room.util.TableInfo
-import com.friendat.R
-import com.friendat.model.database.entity.Friend
-import com.friendat.model.getColor
-import com.friendat.model.getIcon
-import com.friendat.model.nameToResId
+import com.friendat.data.model.Friend
+import com.friendat.data.sources.local.converters.getColor
+import com.friendat.data.sources.local.converters.nameToResId
 import com.friendat.ui.theme.Primary
 
 class MyAppWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -104,27 +93,7 @@ class friendatWidget : GlanceAppWidget() {
         }
     }
 }
-/*
-@Composable
-fun MyContent() {
-    val repository = remember { FriendRepository.getInstance() }
-    // Retrieve the cache data everytime the content is refreshed
-    val destinations by repository.destinations.collectAsState(State.Loading)
 
-    when (destinations) {
-        is State.Loading -> {
-            Column(GlanceModifier.fillMaxSize().background(Color.Green)) {  }
-        }
-
-        is State.Error -> {
-            Column(GlanceModifier.fillMaxSize().background(Color.Red)) {  }
-        }
-
-        is State.Completed -> {
-            widget()
-        }
-    }friend.getColor()
-}*/
 @Composable
 fun ShowFriendNav(friendList: List<Friend>,
                   side:Int,
@@ -202,12 +171,14 @@ fun Empty(){
     }
 }
 @Composable
-fun ShowFriends(friendList: List<Friend>){
+fun ShowFriends(friendList: List<Friend>) {
     var side by remember { mutableIntStateOf(0) }
-    fun changeSide(){side = if(side==0){1}else{0}}
+    fun changeSide() { side = if (side == 0) 1 else 0 }
+
     LazyColumn(GlanceModifier.fillMaxSize().background(Color.DarkGray)) {
-        items(friendList) { friend ->
-            FriendView(friend = friend,side,::changeSide)
+        items(friendList.size) { index -> // Parameter is now clearly named 'index'
+            val friendItem = friendList[index] // Get the Friend object using the index
+            FriendView(friend = friendItem, side = side, onClick = ::changeSide)
         }
     }
 }

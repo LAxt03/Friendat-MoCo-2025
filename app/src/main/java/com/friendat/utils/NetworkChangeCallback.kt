@@ -1,4 +1,4 @@
-package com.friendat.utils // oder dein Paket
+package com.friendat.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -23,7 +23,6 @@ class NetworkChangeCallback(private val context: Context) : ConnectivityManager.
         val isWifi = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
         val logMessage = "onCapabilitiesChanged for $network: WiFi=$isWifi, Connected=${networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)}"
         Log.i(TAG, logMessage)
-        FileLogger.logNetworkCallback(context.applicationContext, TAG, logMessage) // Datei
         val isCellular = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         val isValidated = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         val isConnected = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) // Ist verbunden
@@ -32,11 +31,9 @@ class NetworkChangeCallback(private val context: Context) : ConnectivityManager.
 
         if ((isWifi || isCellular) && isConnected) {
             Log.d(TAG, "Relevant network capability change detected for $network. Enqueuing worker.")
-            FileLogger.logNetworkCallback(context.applicationContext, TAG, "Relevant change detected. Enqueuing worker.")
             enqueueLocationCheckWorker("CapChanged-$network-WiFi:$isWifi-Cell:$isCellular-Valid:$isValidated")
         } else if (!isConnected) {
             Log.d(TAG, "Network $network is no longer connected. Enqueuing worker.")
-            FileLogger.logNetworkCallback(context.applicationContext, TAG, "Network $network no longer connected. Enqueuing worker.")
             enqueueLocationCheckWorker("CapChanged-$network-Disconnected")
         }
     }
@@ -45,12 +42,10 @@ class NetworkChangeCallback(private val context: Context) : ConnectivityManager.
         super.onLost(network)
         val logMessage = "onLost: $network. Enqueuing worker."
         Log.i(TAG, "Network lost: $network. Enqueuing worker.")
-        FileLogger.logNetworkCallback(context.applicationContext, TAG, logMessage) // Datei
         enqueueLocationCheckWorker("Lost-$network")
     }
 
     private fun enqueueLocationCheckWorker(triggerReason: String) {
-        FileLogger.logNetworkCallback(context.applicationContext, TAG, "Attempting to enqueue LocationCheckWorker (delay: ${WORKER_DELAY_SECONDS}s) due to: $triggerReason")
         Log.d(TAG, "Attempting to enqueue LocationCheckWorker (delay: ${WORKER_DELAY_SECONDS}s) due to: $triggerReason")
 
         val locationCheckWorkRequest = OneTimeWorkRequestBuilder<LocationCheckWorker>()
@@ -63,7 +58,6 @@ class NetworkChangeCallback(private val context: Context) : ConnectivityManager.
             ExistingWorkPolicy.REPLACE,
             locationCheckWorkRequest
         )
-        FileLogger.logNetworkCallback(context.applicationContext, TAG, "LocationCheckWorker enqueued with REPLACE policy. Reason: $triggerReason")
         Log.i(TAG, "LocationCheckWorker enqueued with REPLACE policy. Reason: $triggerReason")
     }
 

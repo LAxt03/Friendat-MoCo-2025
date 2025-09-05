@@ -1,6 +1,5 @@
-package com.friendat.navigation // Oder dein gewähltes Paket
+package com.friendat.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,6 +16,7 @@ import com.friendat.ui.screens.LoginScreen
 import com.friendat.ui.screens.WifiLocationsListScreen
 import java.net.URLDecoder
 
+//NavController zum naavigen zwischen den einzelnen Layouts
 @Composable
 fun AppNavigation(
 ) {
@@ -24,13 +24,15 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
+        //Startdestination ist LoginScreen
         startDestination = NavRoute.Login.route
     ) {
+        //Bei erfolgreichem Login wird auf Home geleitet
         composable(route = NavRoute.Login.route) {
             LoginScreen(
                 navController = navController,
-                onLoginSuccess = { // Callback vom LoginScreen bei Erfolg
-                    navController.navigate(NavRoute.Home2.route) {
+                onLoginSuccess = {
+                    navController.navigate(NavRoute.Home.route) {
                         popUpTo(NavRoute.Login.route) { inclusive = true }
                     }
                 }
@@ -50,7 +52,7 @@ fun AppNavigation(
             WifiLocationsListScreen(navController = navController)
         }
 
-
+        //BSSID wird mitgeliefert und umgewandelt (String)
         composable(
             route = NavRoute.AddWifi.route,
             arguments = listOf(navArgument("bssidArg") {

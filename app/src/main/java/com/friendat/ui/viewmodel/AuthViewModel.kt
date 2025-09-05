@@ -1,9 +1,9 @@
-package com.friendat.ui.viewmodel // Passe den Paketnamen ggf. an
+package com.friendat.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.friendat.data.repository.AuthRepository
-import com.friendat.data.repository.UserAuthResult // Importiere deinen Result-Wrapper
+import com.friendat.data.repository.UserAuthResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
-@HiltViewModel //Wichtig für Hilt
+@HiltViewModel // Dagger Hilt
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository // Hier dependency inject
 ) : ViewModel() {

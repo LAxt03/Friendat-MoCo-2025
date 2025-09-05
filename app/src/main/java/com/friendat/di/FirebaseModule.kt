@@ -1,4 +1,4 @@
-package com.friendat.di // Stelle sicher, dass der Paketname stimmt!
+package com.friendat.di
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

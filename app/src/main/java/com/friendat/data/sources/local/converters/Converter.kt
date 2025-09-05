@@ -1,13 +1,12 @@
-package com.friendat.model
+package com.friendat.data.sources.local.converters
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.room.TypeConverter
 import com.friendat.R
-import com.friendat.model.database.entity.Friend
-import com.friendat.model.database.entity.WifiLocation
+import com.friendat.data.model.Friend
+import com.friendat.data.model.WifiLocation
 
 
 fun nameToResId(iconName: String):Int{
@@ -28,10 +27,7 @@ val iconList=listOf<String>("Home","Person","Heart","Car","Mountain","People","A
 fun longToColor(long: Long): Color{
     return Color(long.toULong())
 }
-@Composable
-fun WifiLocation.getIcon()= painterResource(nameToResId(iconName))
 
-fun WifiLocation.getColor(): Color = longToColor(color)
 @Composable
 fun Friend.getIcon()=painterResource(nameToResId(iconName))
 

@@ -7,19 +7,22 @@ import androidx.lifecycle.viewModelScope
 import com.friendat.data.model.WifiLocation
 import com.friendat.data.repository.WifiLocationRepository
 import com.friendat.data.sources.local.dao.WifiLocationDao
-import com.friendat.model.iconList
+import com.friendat.data.sources.local.converters.iconList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
+
+//Verschiedene Zustände in der sich die UI befindet kann, während eine Liste von Wi-Fi Standorten geladen oder angezeigt wird.
 sealed interface WifiLocationListUiState {
     object Loading : WifiLocationListUiState
     data class Success(val locations: List<WifiLocation>) : WifiLocationListUiState
     data class Error(val message: String?) : WifiLocationListUiState
 }
 
+//Verschiedene Zustände in der sich die UI befindet während ein Wi-Fi Standort hinzugefügt oder gelöscht wird.
 sealed interface WifiLocationActionUiState {
     object Idle : WifiLocationActionUiState
     object Loading : WifiLocationActionUiState
@@ -31,8 +34,8 @@ sealed interface WifiLocationActionUiState {
 
 @HiltViewModel
 class WifiLocationsViewModel @Inject constructor(
-    private val wifiLocationRepository: WifiLocationRepository,
-    private val wifiLocationDao: WifiLocationDao
+    private val wifiLocationRepository: WifiLocationRepository, //Für Firebase
+    private val wifiLocationDao: WifiLocationDao //Für Room
 ) : ViewModel() {
 
     //Zustände
@@ -66,12 +69,15 @@ class WifiLocationsViewModel @Inject constructor(
     private val _selectedColorBlue = MutableStateFlow(100f)
     val selectedColorBlue: StateFlow<Float> = _selectedColorBlue.asStateFlow()
 
-
+    //Wifi Locations werden aus Room geladen
     init {
         loadWifiLocationsFromRoom()
     }
 
-
+    //Methode um Wifi Locations aus Firestore zu laden. Wird momentan nicht verwendet.
+    //Es wurde noch nicht implementiert aber Ziel war es, bei Start der App immer eine Synchronisation zu starten
+    //zwischen Room und Firebase damit Room immer auf dem aktuellsten Stand ist.
+    //Diese Methode wird nicht verwendet weil Locations aus Room geladen werden (effizienter und weniger Datenzugriffe)
     private fun loadWifiLocations() {
         viewModelScope.launch {
             wifiLocationRepository.getWifiLocationsForCurrentUser()
@@ -85,38 +91,14 @@ class WifiLocationsViewModel @Inject constructor(
         }
     }
 
+    //Methode um Wifi Locations aus Room zu laden. Wird momentan verwendet, auch wenn noch keine Synchronisation stattfindet
+    //zwischen Firebase und Room. Synchronisation muss implementiert werden.
     private fun loadWifiLocationsFromRoom() {
-        _wifiLocationsState.value = WifiLocationListUiState.Loading // Setze Ladezustand initial
+        _wifiLocationsState.value = WifiLocationListUiState.Loading
         viewModelScope.launch {
-            // Hole die userId sicher, z.B. aus dem AuthRepository oder Firebase Auth direkt
-            // Für dieses Beispiel gehen wir davon aus, dass das Repository das handhaben kann
-            // oder du eine Methode hast, um die aktuelle userId zu bekommen.
-            // Hier wäre es besser, wenn das Repository den userId-Check macht.
-            // Für den DAO-Aufruf brauchen wir aber die userId.
-            // Eine Möglichkeit:
-            // val userId = firebaseAuth.currentUser?.uid // (FirebaseAuth müsste injiziert werden)
-            // if (userId == null) {
-            //     _wifiLocationsState.value = WifiLocationListUiState.Error("User nicht angemeldet")
-            //     return@launch
-            // }
-
-            // wifiLocationDao.getAllLocationsForUserFlow(userId) // <- Braucht die userId
-            // Besser: Das Repository bietet einen Flow aus Room an, der die userId intern behandelt
-
-            // DAHER: Wir erweitern das Repository, um einen Flow aus Room anzubieten
-
-            wifiLocationRepository.getWifiLocationsForCurrentUserFromRoom() // NEUE METHODE IM REPOSITORY
-                .collect { locations -> // Diese Methode gibt direkt List<WifiLocation> oder Result<List<WifiLocation>> zurück
-                    // Je nachdem, wie die neue Repository-Methode implementiert ist:
-                    // Variante A: Repository-Methode gibt Flow<List<WifiLocation>> zurück
+            wifiLocationRepository.getWifiLocationsForCurrentUserFromRoom()
+                .collect { locations ->
                     _wifiLocationsState.value = WifiLocationListUiState.Success(locations)
-
-                    // Variante B: Repository-Methode gibt Flow<Result<List<WifiLocation>>> zurück (ähnlich wie Firestore-Version)
-                    // _wifiLocationsState.value = when {
-                    //    result.isSuccess -> WifiLocationListUiState.Success(result.getOrNull() ?: emptyList())
-                    //    result.isFailure -> WifiLocationListUiState.Error(result.exceptionOrNull()?.message)
-                    //    else -> WifiLocationListUiState.Error("Unknown error")
-                    // }
                 }
         }
     }
@@ -155,6 +137,7 @@ class WifiLocationsViewModel @Inject constructor(
     }
 
 
+    //Methode um ein Wi-Fi Standort in Room und Firebase hinzuzufügen
     fun addWifiLocation() {
         if (_wifiLocationActionState.value == WifiLocationActionUiState.Loading) return // Verhindere doppelte Ausführung
 
@@ -183,6 +166,7 @@ class WifiLocationsViewModel @Inject constructor(
                 iconId = selectedIconName.value,
                 colorHex = colorHex
             )
+            //Hier wird es in Firebase gespeichert und in Room. Siehe in WifiLocationRepositoryImpl die Methode
             val result = wifiLocationRepository.addWifiLocation(newLocation)
 
             if (result.isSuccess) {
@@ -206,6 +190,7 @@ class WifiLocationsViewModel @Inject constructor(
     private val Color.blueInt: Int get() = (this.blue * 255).roundToInt()
 
 
+    //Wird aus Firebase und Room gelöscht
     fun deleteWifiLocation(locationId: String) {
         if (_wifiLocationActionState.value == WifiLocationActionUiState.Loading) return
 

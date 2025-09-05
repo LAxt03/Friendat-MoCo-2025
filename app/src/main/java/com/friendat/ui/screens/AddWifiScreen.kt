@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.friendat.model.nameToResId
+import com.friendat.data.sources.local.converters.nameToResId
 import com.friendat.ui.theme.*
 import com.friendat.ui.viewmodel.WifiLocationActionUiState
 import com.friendat.ui.viewmodel.WifiLocationsViewModel

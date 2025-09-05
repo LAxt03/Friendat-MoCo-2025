@@ -12,7 +12,6 @@ import com.friendat.data.model.LastSentLocationStatus // Dein Modell
 import com.friendat.data.model.WifiLocation // Importiere dein WifiLocation-Modell
 import com.friendat.data.repository.LastStatusRepository // Dein Repository
 import com.friendat.data.sources.local.dao.WifiLocationDao
-import com.friendat.utils.FileLogger
 import com.friendat.utils.WifiUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -41,17 +40,14 @@ class LocationCheckWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Worker execution started.")
         Log.d(TAG, "[FOCUS_WLAN_AN] Worker execution started.")
 
         val currentUser = firebaseAuth.currentUser
         if (currentUser == null) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] No authenticated user.")
             Log.w(TAG, "[FOCUS_WLAN_AN] No authenticated user.")
             return Result.failure()
         }
         val userId = currentUser.uid
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User ID: $userId")
         Log.d(TAG, "[FOCUS_WLAN_AN] User ID: $userId")
 
         if (ContextCompat.checkSelfPermission(
@@ -59,15 +55,12 @@ class LocationCheckWorker @AssistedInject constructor(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] ACCESS_FINE_LOCATION permission not granted.")
             Log.e(TAG, "[FOCUS_WLAN_AN] ACCESS_FINE_LOCATION permission not granted.")
             // Sende "offline" Status mit Standard-Offline-Icon/Farbe
             return updateFirestoreStatus(userId, null, null, false, OFFLINE_ICON_ID, OFFLINE_COLOR_HEX)
         }
 
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Attempting to get BSSID.")
         val currentBssid = WifiUtils.getCurrentBssid(appContext)
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Current BSSID: $currentBssid")
         Log.d(TAG, "[FOCUS_WLAN_AN] Current BSSID: $currentBssid")
 
         var currentEffectiveLocationName: String? = null
@@ -93,7 +86,6 @@ class LocationCheckWorker @AssistedInject constructor(
             currentEffectiveIconId = currentRecognizedLocation.iconId    // <<< GESETZT
             currentEffectiveColorHex = currentRecognizedLocation.colorHex  // <<< GESETZT
             isAtKnownLocation = true
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User at known location: '${currentEffectiveLocationName}', Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
             Log.i(TAG, "[FOCUS_WLAN_AN] User at known location: '${currentEffectiveLocationName}' (BSSID: $currentBssid), Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
         } else {
             // Nicht an einem bekannten Ort ODER kein WLAN
@@ -103,21 +95,18 @@ class LocationCheckWorker @AssistedInject constructor(
                 currentEffectiveLocationName = null // oder "Unknown Wi-Fi"
                 currentEffectiveIconId = DEFAULT_ICON_ID
                 currentEffectiveColorHex = DEFAULT_COLOR_HEX
-                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User on unknown WiFi. Using defaults.")
                 Log.i(TAG, "[FOCUS_WLAN_AN] User on unknown WiFi (BSSID: $currentBssid). Location name null, Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
             } else {
                 // Nicht mit irgendeinem WLAN verbunden
                 currentEffectiveLocationName = null // Oder "Offline"
                 currentEffectiveIconId = OFFLINE_ICON_ID
                 currentEffectiveColorHex = OFFLINE_COLOR_HEX
-                FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] User not connected to any WiFi. Using offline defaults.")
                 Log.i(TAG, "[FOCUS_WLAN_AN] User not connected to any WiFi. Location name null, Icon: $currentEffectiveIconId, Color: $currentEffectiveColorHex")
             }
         }
 
         val lastSavedStatus = lastStatusRepository.getLastSentStatus(appContext)
         Log.d(TAG, "[FOCUS_WLAN_AN] Last locally saved status: $lastSavedStatus")
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Last locally saved status: $lastSavedStatus")
 
         // Erweiterter Vergleich, falls dein LastSentLocationStatus auch Icon/Farbe enthält
         // Fürs Erste vergleichen wir nur die Basisdaten. Wenn sich die Basisdaten ändern,
@@ -144,7 +133,6 @@ class LocationCheckWorker @AssistedInject constructor(
                 (!isAtKnownLocation && lastSavedStatus?.locationName != null) // Von bekannt zu unbekannt/offline
 
         if (shouldUpdateFirestore) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED or significant state difference. Updating Firestore.")
             Log.i(TAG, "[FOCUS_WLAN_AN] CHANGE DETECTED (or first run/significant difference). Updating Firestore.")
             Log.d(TAG, "[FOCUS_WLAN_AN] Old Local: BSSID=${lastSavedStatus?.bssid}, Name=${lastSavedStatus?.locationName}")
             Log.d(TAG, "[FOCUS_WLAN_AN] New State: BSSID=$currentBssid, Name=$currentEffectiveLocationName, Icon=$currentEffectiveIconId, Color=$currentEffectiveColorHex")
@@ -158,7 +146,6 @@ class LocationCheckWorker @AssistedInject constructor(
                 currentEffectiveColorHex   // <<< ÜBERGEBEN
             )
         } else {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] NO significant CHANGE detected.")
             Log.i(TAG, "[FOCUS_WLAN_AN] NO significant CHANGE detected. Firestore update not strictly needed. Local timestamp will be updated.")
             val confirmedStatus = LastSentLocationStatus(
                 bssid = currentBssid,
@@ -170,7 +157,6 @@ class LocationCheckWorker @AssistedInject constructor(
             )
             lastStatusRepository.saveLastSentStatus(appContext, confirmedStatus)
             Log.d(TAG, "[FOCUS_WLAN_AN] Updated local status timestamp: $confirmedStatus")
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Updated local status timestamp (no Firestore send).")
             return Result.success()
         }
     }
@@ -183,7 +169,6 @@ class LocationCheckWorker @AssistedInject constructor(
         iconId: String?,      // <<< PARAMETER HINZUGEFÜGT
         colorHex: String?     // <<< PARAMETER HINZUGEFÜGT
     ): Result {
-        FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] updateFirestoreStatus CALLED with Name='$locationName', BSSID='$bssid', Icon='$iconId', Color='$colorHex'")
         val statusUpdateData = hashMapOf<String, Any?>( // Any? um Null-Werte explizit zu erlauben
             // "userId" to userId, // Redundant, da es die Document ID ist, kann aber bleiben.
             "currentLocationName" to locationName,
@@ -198,7 +183,6 @@ class LocationCheckWorker @AssistedInject constructor(
             firestore.collection(USER_STATUS_COLLECTION).document(userId)
                 .set(statusUpdateData) // .set überschreibt das Dokument komplett mit diesen Daten
                 .await()
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Successfully updated Firestore. Saving local status.")
             Log.i(TAG, "[FOCUS_WLAN_AN] Successfully updated status in Firestore for user $userId: Data=$statusUpdateData")
 
             val newLocalStatusToSave = LastSentLocationStatus(
@@ -210,11 +194,9 @@ class LocationCheckWorker @AssistedInject constructor(
             )
             lastStatusRepository.saveLastSentStatus(appContext, newLocalStatusToSave)
             Log.d(TAG, "[FOCUS_WLAN_AN] Saved new status locally (after Firestore update): $newLocalStatusToSave")
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Saved new status locally: $newLocalStatusToSave")
             Result.success()
 
         } catch (e: Exception) {
-            FileLogger.logWorker(appContext, TAG, "[FOCUS_WLAN_AN] Error updating Firestore: ${e.message}. Retrying.")
             Log.e(TAG, "[FOCUS_WLAN_AN] Error updating status in Firestore for user $userId. Retrying.", e)
             Result.retry()
         }

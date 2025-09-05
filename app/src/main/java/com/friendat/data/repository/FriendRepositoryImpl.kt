@@ -18,20 +18,16 @@ import javax.inject.Singleton
 
 @Singleton
 class FriendRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore // Wird über Hilt injiziert
+    private val firestore: FirebaseFirestore
 ) : FriendRepository {
 
     companion object {
-        private const val TAG = "FriendRepositoryImpl"
+        private const val TAG = "FriendRepositoryImpl" //Tag fürs Logging
         private const val USERS_COLLECTION = "users" // Sammlung für Nutzerprofile
         private const val FRIENDSHIPS_COLLECTION = "friendships" // Sammlung für Freundschaftsbeziehungen
     }
 
-    /**
-     * Finds a user by their email.
-     * Assumes a 'users' collection in Firestore where user documents have an 'email' field.
-     * The document ID of a user in the 'users' collection is assumed to be their Firebase Auth UID.
-     */
+
     override suspend fun findUserByEmail(email: String): Result<UserDisplayInfo?> {
         if (email.isBlank()) {
             return Result.failure(IllegalArgumentException("Email cannot be blank."))
@@ -48,8 +44,8 @@ class FriendRepositoryImpl @Inject constructor(
             } else {
                 val document = querySnapshot.documents.first()
                 val userDisplayInfo = UserDisplayInfo(
-                    uid = document.id, // Annahme: Dokument-ID ist die UID
-                    displayName = document.getString("displayName"), // Optionales Feld
+                    uid = document.id,
+                    displayName = document.getString("displayName"), //Momentan Null, weil ein Nutzer keinen Namen hat (Nur Email). Aktuell werden nur Spitznamen von den Freunden verliehen, aber nicht in der Firebase Datenbank gespeichert.
                     email = document.getString("email")
                 )
                 Result.success(userDisplayInfo)
@@ -60,12 +56,10 @@ class FriendRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Sends a friend request from the [currentUserId] to the [targetUserId].
-     * Creates a new document in the 'friendships' collection with PENDING status.
-     * Ensures that 'participants' list is sorted to maintain consistency.
-     */
+
     override suspend fun sendFriendRequest(currentUserId: String, targetUserId: String): Result<Unit> {
+
+        //Man kann nicht mit sich selbst befreundet sein.
         if (currentUserId == targetUserId) {
             return Result.failure(IllegalArgumentException("Cannot send friend request to oneself."))
         }
@@ -81,15 +75,16 @@ class FriendRepositoryImpl @Inject constructor(
                 .await()
 
             if (!existingFriendshipQuery.isEmpty) {
-                // Eine Beziehung existiert bereits. Überprüfe den Status.
+                // Eine Beziehung existiert bereits
                 val existingFriendshipDoc = existingFriendshipQuery.documents.first()
                 val existingStatus = existingFriendshipDoc.getString("status")
+
+                //Entweder bereits gesendet oder bereits befreundet
                 if (existingStatus == FriendshipStatus.PENDING.name) {
                     return Result.failure(Exception("Friend request already pending."))
                 } else if (existingStatus == FriendshipStatus.ACCEPTED.name) {
                     return Result.failure(Exception("You are already friends."))
                 }
-                // Für andere Status (falls später hinzugefügt) ggf. andere Logik
             }
 
             // Neue Freundschaftsanfrage erstellen
@@ -100,7 +95,6 @@ class FriendRepositoryImpl @Inject constructor(
                 initialStatus = FriendshipStatus.PENDING
             )
 
-            // Explizit die Felder setzen, um @ServerTimestamp korrekt zu nutzen
             val friendshipData = hashMapOf(
                 "participants" to newFriendship.participants,
                 "requesterId" to newFriendship.requesterId,
@@ -109,6 +103,7 @@ class FriendRepositoryImpl @Inject constructor(
                 "respondedAt" to null // Wird erst bei Antwort gesetzt
             )
 
+            //Firestore Collection für Freundschaften. Für eine Freundschaft zwischen Nutzer A und Nutzer B wird ein einzelner Eintrag erstellt.
             firestore.collection(FRIENDSHIPS_COLLECTION)
                 .add(friendshipData)
                 .await()
@@ -119,37 +114,30 @@ class FriendRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Gets a flow of pending friend requests for the given [userId] where this user is the recipient.
-     * This means the [userId] is in 'participants' and is NOT the 'requesterId',
-     * and status is PENDING.
-     */
     override fun getPendingFriendRequests(userId: String): Flow<Result<List<Friendship>>> = callbackFlow {
         val listenerRegistration = firestore.collection(FRIENDSHIPS_COLLECTION)
+            //Participants sind hier beide Nutzer der Freundschaft.
             .whereArrayContains("participants", userId)
             .whereEqualTo("status", FriendshipStatus.PENDING.name)
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w(TAG, "Listen error for pending requests for user $userId", e)
-                    trySend(Result.failure(e)).isFailure // trySend non-blocking
-                    close(e) // Schließt den Flow bei Fehler
+                    trySend(Result.failure(e)).isFailure
+                    close(e)
                     return@addSnapshotListener
                 }
 
                 if (snapshots != null) {
                     val pendingRequests = snapshots.documents.mapNotNull { doc ->
                         try {
-                            // Wichtig: document.toObject(Friendship::class.java) funktioniert nur,
-                            // wenn Friendship einen parameterlosen Konstruktor hat oder alle Felder
-                            // Standardwerte haben und die Namen exakt mit Firestore übereinstimmen.
                             doc.toObject<Friendship>()?.copy(id = doc.id)
                         } catch (parseError: Exception) {
                             Log.e(TAG, "Error parsing Friendship document ${doc.id}", parseError)
                             null
                         }
                     }.filter {
-                        // Clientseitige Filterung: Nur Anfragen, bei denen der aktuelle Nutzer der Empfänger ist
+                        //Clientseitige Filterung: Nur Anfragen, bei denen der aktuelle Nutzer der Empfänger ist
                         it.requesterId != userId && it.participants.contains(userId)
                     }
                     trySend(Result.success(pendingRequests)).isFailure
@@ -167,7 +155,7 @@ class FriendRepositoryImpl @Inject constructor(
         val listenerRegistration = firestore.collection(FRIENDSHIPS_COLLECTION)
             .whereArrayContains("participants", userId) // Der Nutzer muss Teil der Beziehung sein
             .whereEqualTo("status", FriendshipStatus.ACCEPTED.name) // Nur akzeptierte Freundschaften
-            .orderBy("respondedAt", Query.Direction.DESCENDING) // Optional: Nach Akzeptanzdatum sortieren
+            .orderBy("respondedAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w(TAG, "Listen error for accepted friends for user $userId", e)
@@ -323,8 +311,7 @@ class FriendRepositoryImpl @Inject constructor(
             return Result.success(emptyList())
         }
 
-        // Firestore 'in' Abfragen sind auf maximal 30 IDs pro Abfrage beschränkt (vorher 10).
-        // Wir müssen die Abfrage ggf. aufteilen (chunking).
+        // Firestore 'in' Abfragen sind auf maximal 30 IDs pro Abfrage beschränkt
         val chunkSize = 30
         val userDisplayInfoList = mutableListOf<UserDisplayInfo>()
 

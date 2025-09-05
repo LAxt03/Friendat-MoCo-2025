@@ -13,13 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.friendat.model.database.entity.Friend
-import com.friendat.model.getColor
-import com.friendat.model.getIcon
+import com.friendat.data.model.Friend
+import com.friendat.data.sources.local.converters.getColor
+import com.friendat.data.sources.local.converters.getIcon
 import com.friendat.ui.theme.Sekundary
-import com.friendat.ui.viewmodel.FriendScreenUiEvent
-import com.friendat.ui.viewmodel.FriendsListUiState
-import com.friendat.ui.viewmodel.FriendshipWithDisplayInfo
 
 @Composable
 fun FriendCard(

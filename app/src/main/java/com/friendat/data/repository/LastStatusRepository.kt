@@ -3,7 +3,7 @@ package com.friendat.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.friendat.data.model.LastSentLocationStatus // Stelle sicher, dass das Modell korrekt ist
+import com.friendat.data.model.LastSentLocationStatus
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 

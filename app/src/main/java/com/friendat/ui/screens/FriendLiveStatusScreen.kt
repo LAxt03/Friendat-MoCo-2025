@@ -6,12 +6,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle // Standard-Icons
 import androidx.compose.material.icons.filled.HelpOutline // Fallback Icon
 import androidx.compose.material.icons.filled.SignalWifiOff
-// Importiere hier Icons, die du tatsächlich für deine Status verwenden wirst, z.B.
-// import androidx.compose.material.icons.filled.Home
-// import androidx.compose.material.icons.filled.Work
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,9 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-// Stelle sicher, dass die folgenden Importe auf deine tatsächlichen Klassen verweisen
-// import com.friendat.ui.livestatus.FriendLiveStatusViewModel // Dein ViewModel
-// import com.friendat.ui.livestatus.FriendWithLiveStatus // Deine Datenklasse
+import com.friendat.ui.viewmodel.FriendLiveStatusViewModel
+import com.friendat.ui.viewmodel.FriendWithLiveStatus
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

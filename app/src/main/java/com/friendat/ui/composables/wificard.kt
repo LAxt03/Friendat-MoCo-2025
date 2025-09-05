@@ -13,16 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.ImageProvider
 import com.friendat.data.model.WifiLocation
-import com.friendat.model.getColor
-import com.friendat.model.getIcon
-import com.friendat.model.nameToResId
+import com.friendat.data.sources.local.converters.nameToResId
 import com.friendat.ui.theme.Sekundary
 
 @Composable

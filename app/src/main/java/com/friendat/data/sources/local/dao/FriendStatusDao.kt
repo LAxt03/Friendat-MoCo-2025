@@ -1,10 +1,10 @@
-package com.friendat.data.sources.local.dao // Dein DAO-Paket
+package com.friendat.data.sources.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.friendat.data.model.FriendStatus // Importiere dein aktualisiertes FriendStatus-Modell
+import com.friendat.data.model.FriendStatus
 import kotlinx.coroutines.flow.Flow
 
 @Dao

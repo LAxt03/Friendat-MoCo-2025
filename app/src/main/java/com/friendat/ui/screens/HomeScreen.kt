@@ -33,7 +33,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.friendat.model.database.entity.Friend
+import com.friendat.data.model.Friend
 import com.friendat.navigation.NavRoute
 import com.friendat.ui.composables.FriendCard
 import com.friendat.ui.composables.WifiCard
